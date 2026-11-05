@@ -464,18 +464,28 @@
             tableHtml += `<div style="font-size:16pt; font-weight:bold; margin-bottom: 5px;">${docTitle}</div>`;
             tableHtml += `<div style="font-size:14pt; margin-bottom: 10px;">${subTitle}</div>`;
             tableHtml += `</div>`;
-            tableHtml += `<table border="1" cellpadding="2" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: center; font-family: DFKai-SB, MingLiU, serif; font-size: 10pt;">`;
             
-            // 表頭：固定 32 欄 (座號與 1~31 日) 標題字垂直排列
-            tableHtml += `<tr style="height: 50px;"><th style="width: 30px; white-space: nowrap;">座號</th>`;
+            // 外圍四邊加粗 (border: 2.5pt solid black)
+            tableHtml += `<table cellpadding="2" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: center; font-family: DFKai-SB, MingLiU, serif; font-size: 10pt; border: 2.5pt solid black;">`;
+            
+            // 表頭：固定 32 欄 (座號與 1~31 日) 標題字垂直排列，表頭淺灰底色
+            tableHtml += `<tr style="height: 50px; background-color: #f2f2f2;">`;
+            // 表頭第一格也加上下邊線加粗以區隔標題與內容
+            tableHtml += `<th style="width: 30px; white-space: nowrap; border: 1pt solid black; border-bottom: 2.5pt solid black;">座號</th>`;
             for (let d = 1; d <= 31; d++) {
-                tableHtml += `<th style="layout-flow: vertical-ideographic; writing-mode: tb-rl; padding: 2px;">${d}日</th>`;
+                tableHtml += `<th style="layout-flow: vertical-ideographic; writing-mode: tb-rl; padding: 2px; border: 1pt solid black; border-bottom: 2.5pt solid black;">${d}日</th>`;
             }
             tableHtml += `</tr>`;
 
             // 學生資料列
             for (let s = 1; s <= totalStudents; s++) {
-                tableHtml += `<tr><td>${s}</td>`;
+                // 每 5 個座號下方邊線加粗(2.5pt)，其餘為一般細線(1pt)
+                let bottomBorder = (s % 5 === 0) ? '2.5pt solid black' : '1pt solid black';
+                
+                tableHtml += `<tr>`;
+                // 第1欄：淺灰底色與粗體字
+                tableHtml += `<td style="background-color: #f2f2f2; font-weight: bold; border: 1pt solid black; border-bottom: ${bottomBorder};">${s}</td>`;
+                
                 for (let d = 1; d <= 31; d++) {
                     let symbol = ''; // 預設無紀錄為空白
                     
@@ -492,7 +502,8 @@
                             }
                         }
                     }
-                    tableHtml += `<td>${symbol}</td>`;
+                    // 將邊線粗細樣式直接寫入每一個 TD 確保 Word 完美讀取
+                    tableHtml += `<td style="border: 1pt solid black; border-bottom: ${bottomBorder};">${symbol}</td>`;
                 }
                 tableHtml += `</tr>`;
             }
