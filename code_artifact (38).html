@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班級潔牙打卡板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#1a202c',
+                        darkCard: '#2d3748',
+                        darkText: '#e2e8f0'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card-btn { transition: transform 0.1s, filter 0.2s; }
+        .card-btn:active { transform: scale(0.95); }
+        /* 隱藏捲動軸確保大螢幕完美滿版 */
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-amber-50 dark:bg-darkBg transition-colors h-screen overflow-hidden flex flex-col p-2 select-none">
+    
+    <!-- 頂部工具列 -->
+    <header class="bg-white dark:bg-darkCard rounded-2xl shadow-md p-3 mb-2 flex flex-wrap items-center justify-between gap-3 flex-shrink-0">
+        <!-- 左側：時間與日期選擇 -->
+        <div class="flex items-center gap-3">
+            <div id="clock" class="text-3xl font-black text-indigo-600 dark:text-indigo-400">12:00 PM</div>
+            <input type="date" id="date-picker" class="border-2 border-indigo-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-1 text-lg font-bold outline-none focus:border-indigo-500 cursor-pointer">
+        </div>
+
+        <!-- 中間：標題與統計 -->
+        <div class="flex items-center gap-4">
+            <h1 class="text-2xl font-black text-gray-800 dark:text-white tracking-widest">✨ 班級潔牙打卡板 ✨</h1>
+            <div class="flex gap-2 text-lg font-bold">
+                <span class="bg-red-100 text-red-700 border-2 border-red-300 px-3 py-1 rounded-full shadow-sm">👾 未完成: <span id="stat-uncompleted">0</span></span>
+                <span class="bg-green-100 text-green-700 border-2 border-green-300 px-3 py-1 rounded-full shadow-sm">✨ 已潔牙: <span id="stat-completed">0</span></span>
+            </div>
+        </div>
+
+        <!-- 右側：功能按鈕 -->
+        <div class="flex items-center gap-2">
+            <!-- 手動寫入紀錄按鈕 -->
+            <button id="btn-force-save" title="如要紀錄全班都沒潔牙才需按此鈕" class="bg-blue-500 hover:bg-blue-600 text-white rounded-xl px-4 py-2 font-bold shadow flex items-center gap-2 text-lg">
+                💾 強制存檔
+            </button>
+            <button id="btn-records" class="bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl px-4 py-2 font-bold shadow flex items-center gap-2 text-lg">
+                📅 紀錄
+            </button>
+            <button id="btn-settings" class="bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 font-bold shadow flex items-center gap-2 text-lg">
+                ⚙️ 設定
+            </button>
+            <button id="btn-theme" class="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-xl p-2 font-bold shadow text-2xl w-12 h-12 flex items-center justify-center">
+                🌙
+            </button>
+            <button id="btn-fullscreen" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl p-2 font-bold shadow text-2xl w-12 h-12 flex items-center justify-center">
+                ⛶
+            </button>
+        </div>
+    </header>
+
+    <!-- 打卡網格區（動態滿版） -->
+    <main id="students-grid" class="flex-grow grid gap-3 min-h-0">
+        <!-- 卡片會由 JavaScript 自動生成 -->
+    </main>
+
+    <!-- 系統提示浮水印 -->
+    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full text-lg font-bold shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-[100]">
+        操作成功！
+    </div>
+
+    <!-- 紀錄查詢面板 -->
+    <div id="modal-records" class="fixed inset-0 bg-black bg-opacity-60 hidden flex-col items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-5xl max-h-full flex flex-col rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-indigo-500 text-white p-4 flex justify-between items-center text-2xl font-bold">
+                <h2>📅 歷史紀錄查詢</h2>
+                <button class="close-modal bg-white text-indigo-500 rounded-full w-10 h-10 flex items-center justify-center hover:bg-indigo-100 shadow">✖</button>
+            </div>
+            <!-- 匯出報表區塊 -->
+            <div class="bg-blue-50 dark:bg-gray-700 p-4 border-b-2 border-indigo-100 dark:border-gray-600 flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3">
+                    <label class="text-xl font-bold text-gray-700 dark:text-gray-200">📊 匯出報表：</label>
+                    <input type="month" id="export-month" class="border-2 border-blue-200 dark:border-gray-500 rounded-lg px-3 py-1 text-lg font-bold dark:bg-gray-600 dark:text-white">
+                </div>
+                <button id="btn-export-word" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2 font-bold shadow flex items-center gap-2 text-lg">
+                    📄 匯出 Word
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-grow dark:text-white bg-gray-100 dark:bg-gray-800" id="records-content">
+                <!-- 歷史紀錄內容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 設定面板 -->
+    <div id="modal-settings" class="fixed inset-0 bg-black bg-opacity-60 hidden flex-col items-center justify-center z-50 p-4">
+        <!-- 這裡把 max-w-md 改成了 max-w-5xl 以支援橫式排版 -->
+        <div class="bg-white dark:bg-darkCard w-full max-w-5xl max-h-full flex flex-col rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-orange-500 text-white p-4 flex justify-between items-center text-2xl font-bold">
+                <h2>⚙️ 設定</h2>
+                <button class="close-modal bg-white text-orange-500 rounded-full w-10 h-10 flex items-center justify-center hover:bg-orange-100 shadow">✖</button>
+            </div>
+            
+            <!-- 改用 grid 雙欄排版 -->
+            <div class="p-6 overflow-y-auto flex-grow grid grid-cols-1 md:grid-cols-2 gap-8 dark:text-white">
+                
+                <!-- 左側：班級資料設定 -->
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <label class="block text-lg font-bold mb-2">班級名稱</label>
+                        <div class="flex items-center gap-4">
+                            <!-- 年級上下調整 -->
+                            <div class="flex flex-col items-center bg-gray-100 dark:bg-gray-700 rounded-xl p-2 shadow-inner w-32">
+                                <button id="btn-grade-up" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-blue-500 font-bold active:bg-gray-200">▲</button>
+                                <div id="display-grade" class="py-2 text-2xl font-black text-gray-800 dark:text-white">一年級</div>
+                                <button id="btn-grade-down" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-blue-500 font-bold active:bg-gray-200">▼</button>
+                            </div>
+                            <div class="text-3xl font-black text-gray-400">-</div>
+                            <!-- 班級上下調整 -->
+                            <div class="flex flex-col items-center bg-gray-100 dark:bg-gray-700 rounded-xl p-2 shadow-inner w-32">
+                                <button id="btn-class-up" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-blue-500 font-bold active:bg-gray-200">▲</button>
+                                <div id="display-class" class="py-2 text-2xl font-black text-gray-800 dark:text-white">1班</div>
+                                <button id="btn-class-down" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-blue-500 font-bold active:bg-gray-200">▼</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-lg font-bold mb-2">班級人數</label>
+                        <input type="number" id="input-total-students" class="w-full border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-xl p-2 text-xl" min="1" max="60" value="30">
+                    </div>
+                    <div class="flex-grow flex flex-col">
+                        <label class="block text-lg font-bold mb-2">學生姓名清單 (每行輸入一位)</label>
+                        <textarea id="input-student-names" class="w-full flex-grow border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-xl p-2 text-lg leading-relaxed resize-none min-h-[12rem]" placeholder="王小明&#10;陳小華&#10;..."></textarea>
+                    </div>
+                    <button id="btn-save-settings" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl text-xl shadow mt-2">
+                        💾 儲存設定並重新載入
+                    </button>
+                </div>
+
+                <!-- 右側：快捷操作與資料管理 -->
+                <div class="flex flex-col gap-4">
+                    <!-- 快捷操作 -->
+                    <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-inner">
+                        <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">⚡ 快捷操作</h3>
+                        <button id="btn-complete-all" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xl shadow mb-3">
+                            ✨ 一鍵全班已潔牙
+                        </button>
+                        <button id="btn-reset-all" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl text-xl shadow">
+                            🔄 一鍵全部重設
+                        </button>
+                    </div>
+                    
+                    <!-- 資料管理專區 -->
+                    <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-inner flex-grow flex flex-col">
+                        <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">🗄️ 資料管理</h3>
+                        <div class="flex flex-col gap-3 flex-grow justify-center">
+                            <button id="btn-backup" class="bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg px-4 py-3 font-bold shadow flex items-center justify-center gap-2 text-lg">
+                                📦 一鍵備份資料
+                            </button>
+                            <button id="btn-import-trigger" class="bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-4 py-3 font-bold shadow flex items-center justify-center gap-2 text-lg">
+                                📥 一鍵匯入資料
+                            </button>
+                            <input type="file" id="input-import-file" accept=".json" class="hidden">
+                            <button id="btn-delete-all-records" class="bg-red-700 hover:bg-red-800 text-white rounded-lg px-4 py-3 font-bold shadow flex items-center justify-center gap-2 text-lg mt-2">
+                                🚨 刪除所有打卡紀錄
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 紀錄詳細視窗 -->
+    <div id="modal-details" class="fixed inset-0 bg-black bg-opacity-60 hidden flex-col items-center justify-center z-[60] p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-lg max-h-full flex flex-col rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-blue-500 text-white p-4 flex justify-between items-center text-2xl font-bold">
+                <h2 id="details-title">🔍 詳細名單</h2>
+                <button class="close-modal bg-white text-blue-500 rounded-full w-10 h-10 flex items-center justify-center hover:bg-blue-100 shadow">✖</button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-grow flex flex-col gap-4 dark:text-white bg-gray-50 dark:bg-gray-800 text-xl font-bold" id="details-content">
+                <!-- 動態填入 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 自訂確認對話框 (取代內建 confirm) -->
+    <div id="custom-dialog" class="fixed inset-0 bg-black bg-opacity-60 hidden flex-col items-center justify-center z-[150] p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-md flex flex-col rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="custom-dialog-box">
+            <div class="p-6 text-center">
+                <div id="custom-dialog-icon" class="text-5xl mb-4">⚠️</div>
+                <h3 id="custom-dialog-title" class="text-2xl font-bold text-gray-800 dark:text-white mb-2">確認</h3>
+                <p id="custom-dialog-message" class="text-lg text-gray-600 dark:text-gray-300 mb-6">您確定要執行此操作嗎？</p>
+                <div class="flex justify-center gap-4">
+                    <button id="custom-dialog-cancel" class="bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-xl px-6 py-2 font-bold text-lg transition-colors">取消</button>
+                    <button id="custom-dialog-confirm" class="bg-red-500 hover:bg-red-600 text-white rounded-xl px-6 py-2 font-bold text-lg transition-colors">確定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 核心狀態
+        const gradeStrs = ['一', '二', '三', '四', '五', '六'];
+        let gradeIdx = parseInt(localStorage.getItem('tb_grade_idx')) || 0;
+        let classNum = parseInt(localStorage.getItem('tb_class_num')) || 1;
+        let classNameStr = localStorage.getItem('tb_class_name') || '一年一班';
+        
+        // 嘗試從舊的 classNameStr 解析回索引 (為了相容以前的資料)
+        let matchClassName = classNameStr.match(/([一二三四五六])年(\d+)班/);
+        if (matchClassName) {
+            gradeIdx = gradeStrs.indexOf(matchClassName[1]) !== -1 ? gradeStrs.indexOf(matchClassName[1]) : gradeIdx;
+            classNum = parseInt(matchClassName[2]) || classNum;
+        }
+
+        let totalStudents = parseInt(localStorage.getItem('tb_total_students')) || 30;
+        let studentNames = JSON.parse(localStorage.getItem('tb_student_names') || '[]');
+        let studentData = [];
+        
+        const grid = document.getElementById('students-grid');
+        const datePicker = document.getElementById('date-picker');
+        const statUncompleted = document.getElementById('stat-uncompleted');
+        const statCompleted = document.getElementById('stat-completed');
+        
+        // 取得台灣時區今日日期 (避免 UTC 誤差)
+        const today = new Date();
+        const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+        datePicker.value = todayStr;
+        
+        // 時鐘更新
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            document.getElementById('clock').innerText = hours + ':' + minutes + ' ' + ampm;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+        
+        // 網格初始化：依照人數動態分割，確保 1920x1080 不需捲動
+        function initGrid() {
+            let cols = 5;
+            if (totalStudents > 42) cols = 8;
+            else if (totalStudents > 35) cols = 7;
+            else if (totalStudents > 25) cols = 6;
+            else if (totalStudents > 15) cols = 5;
+            else cols = 4;
+            
+            grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+            grid.style.gridAutoRows = `minmax(0, 1fr)`;
+            
+            loadData(datePicker.value);
+        }
+        
+        // 載入該日資料
+        function loadData(dateKey) {
+            const records = JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}');
+            if (records[dateKey]) {
+                studentData = records[dateKey];
+                // 處理中途修改班級總人數的狀況
+                if (studentData.length < totalStudents) {
+                    for(let i = studentData.length; i < totalStudents; i++) {
+                        studentData.push({ id: i + 1, status: 0 });
+                    }
+                } else if (studentData.length > totalStudents) {
+                    studentData = studentData.slice(0, totalStudents);
+                }
+            } else {
+                studentData = Array.from({length: totalStudents}, (_, i) => ({ id: i + 1, status: 0 }));
+            }
+            renderCards();
+        }
+        
+        // 智慧寫入紀錄
+        function saveData(force = false) {
+            const dateKey = datePicker.value;
+            // 檢查是否有人刷牙或是請假 (狀態不為0)
+            const hasActivity = studentData.some(s => s.status > 0);
+            let records = JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}');
+            
+            // 【關鍵】如果全班都沒刷，且不是手動按「寫入紀錄」，就不要存這筆資料，並刪除該日空紀錄
+            if (!hasActivity && !force) {
+                if (records[dateKey]) {
+                    delete records[dateKey];
+                    localStorage.setItem('tooth_brushing_records', JSON.stringify(records));
+                }
+                return;
+            }
+            
+            records[dateKey] = studentData;
+            localStorage.setItem('tooth_brushing_records', JSON.stringify(records));
+        }
+        
+        // 顯示浮水印訊息
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => toast.classList.add('opacity-0'), 2500);
+        }
+
+        // 顯示自訂確認對話框
+        let confirmTimeoutId = null;
+        function showConfirm(title, message, icon, onConfirm) {
+            const dialog = document.getElementById('custom-dialog');
+            const box = document.getElementById('custom-dialog-box');
+            
+            // 如果前一個視窗正在關閉中，取消它的隱藏動作（防止連續彈窗一閃而過）
+            if (confirmTimeoutId) clearTimeout(confirmTimeoutId);
+
+            document.getElementById('custom-dialog-title').innerText = title;
+            document.getElementById('custom-dialog-message').innerText = message;
+            document.getElementById('custom-dialog-icon').innerText = icon;
+
+            dialog.classList.remove('hidden');
+            dialog.classList.add('flex');
+            setTimeout(() => box.classList.remove('scale-95'), 10);
+
+            const cancelBtn = document.getElementById('custom-dialog-cancel');
+            const confirmBtn = document.getElementById('custom-dialog-confirm');
+
+            const newCancel = cancelBtn.cloneNode(true);
+            const newConfirm = confirmBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+            confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+            const closeDialog = () => {
+                box.classList.add('scale-95');
+                confirmTimeoutId = setTimeout(() => {
+                    dialog.classList.add('hidden');
+                    dialog.classList.remove('flex');
+                }, 200);
+            };
+
+            newCancel.addEventListener('click', closeDialog);
+            newConfirm.addEventListener('click', () => {
+                closeDialog();
+                if (onConfirm) onConfirm();
+            });
+        }
+        
+        // 渲染學生卡片
+        function renderCards() {
+            grid.innerHTML = '';
+            let uncompleted = 0;
+            let completed = 0;
+            
+            studentData.forEach((student, index) => {
+                const name = studentNames[index] || '';
+                
+                let bgClass = '';
+                let emoji = '';
+                if (student.status === 0) {
+                    bgClass = 'bg-red-300 dark:bg-red-800 border-red-400 text-red-900 dark:text-white';
+                    emoji = '👾'; // 更新為蛀牙小怪獸
+                    uncompleted++;
+                } else if (student.status === 1) {
+                    bgClass = 'bg-green-300 dark:bg-green-700 border-green-400 text-green-900 dark:text-white';
+                    emoji = '✨';
+                    completed++;
+                } else if (student.status === 2) {
+                    bgClass = 'bg-gray-300 dark:bg-gray-600 border-gray-400 text-gray-700 dark:text-gray-200';
+                    emoji = '😴';
+                }
+                
+                const card = document.createElement('button');
+                // 嚴格使用 flex-col 與 justify-between，保留座號與姓名空間
+                card.className = `card-btn flex flex-col justify-between items-center rounded-2xl border-b-[6px] p-2 h-full w-full overflow-hidden ${bgClass}`;
+                card.onclick = () => {
+                    student.status = (student.status + 1) % 3;
+                    saveData(false); // 觸發自動智慧儲存檢查
+                    renderCards();
+                };
+                
+                card.innerHTML = `
+                    <div class="text-xl md:text-2xl font-black w-full text-center leading-none mt-1">${student.id}號</div>
+                    <div class="text-4xl md:text-5xl lg:text-6xl flex-grow flex items-center justify-center my-1 filter drop-shadow-md">${emoji}</div>
+                    <div class="text-lg md:text-xl font-bold truncate w-full px-1 text-center leading-none h-6 mb-1">${name}</div>
+                `;
+                grid.appendChild(card);
+            });
+            
+            statUncompleted.innerText = uncompleted;
+            statCompleted.innerText = completed;
+        }
+        
+        // 切換日期自動載入
+        datePicker.addEventListener('change', (e) => {
+            loadData(e.target.value);
+        });
+        
+        // 手動寫入按鈕
+        document.getElementById('btn-force-save').addEventListener('click', () => {
+            saveData(true);
+            showToast('✅ 今日狀態已強制寫入紀錄！');
+        });
+        
+        // 彈出視窗控制
+        const modalRecords = document.getElementById('modal-records');
+        const modalSettings = document.getElementById('modal-settings');
+        
+        document.getElementById('btn-records').addEventListener('click', () => {
+            // 初始化月份選擇器為當月
+            const exportMonthInput = document.getElementById('export-month');
+            if (!exportMonthInput.value) {
+                exportMonthInput.value = todayStr.substring(0, 7);
+            }
+            renderRecordsModal();
+            modalRecords.classList.remove('hidden');
+            modalRecords.classList.add('flex');
+        });
+
+        // 匯出 Word 報表功能
+        document.getElementById('btn-export-word').addEventListener('click', () => {
+            const monthVal = document.getElementById('export-month').value;
+            if (!monthVal) {
+                showToast('⚠️ 請先選擇月份！');
+                return;
+            }
+            
+            const [yearStr, monthStr] = monthVal.split('-');
+            const gregorianYear = parseInt(yearStr, 10);
+            const twYear = gregorianYear - 1911;
+            const monthNum = parseInt(monthStr, 10);
+
+            const docTitle = `榮富國民小學潔牙紀錄表`;
+            const subTitle = `${twYear} 年 ${monthNum} 月 ${classNameStr}`;
+            const daysInMonth = new Date(gregorianYear, monthNum, 0).getDate();
+            const records = JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}');
+
+            // 組合 Word 用的 HTML 表格
+            let tableHtml = `<div style="text-align:center; font-family: DFKai-SB, MingLiU, serif;">`;
+            tableHtml += `<div style="font-size:16pt; font-weight:bold; margin-bottom: 5px;">${docTitle}</div>`;
+            tableHtml += `<div style="font-size:14pt; margin-bottom: 10px;">${subTitle}</div>`;
+            tableHtml += `</div>`;
+            tableHtml += `<table border="1" cellpadding="2" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: center; font-family: DFKai-SB, MingLiU, serif; font-size: 10pt;">`;
+            
+            // 表頭：固定 32 欄 (座號與 1~31 日) 標題字垂直排列
+            tableHtml += `<tr style="height: 50px;"><th style="width: 30px; white-space: nowrap;">座號</th>`;
+            for (let d = 1; d <= 31; d++) {
+                tableHtml += `<th style="layout-flow: vertical-ideographic; writing-mode: tb-rl; padding: 2px;">${d}日</th>`;
+            }
+            tableHtml += `</tr>`;
+
+            // 學生資料列
+            for (let s = 1; s <= totalStudents; s++) {
+                tableHtml += `<tr><td>${s}</td>`;
+                for (let d = 1; d <= 31; d++) {
+                    let symbol = ''; // 預設無紀錄為空白
+                    
+                    // 只有在該月實際天數範圍內才去抓資料（例如 2月可能只有到 28日）
+                    if (d <= daysInMonth) {
+                        const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
+                        const dailyData = records[dateKey];
+                        if (dailyData) {
+                            const studentRecord = dailyData.find(st => st.id === s);
+                            if (studentRecord) {
+                                if (studentRecord.status === 1) symbol = '✓';
+                                else if (studentRecord.status === 0) symbol = '✗';
+                                else if (studentRecord.status === 2) symbol = '△';
+                            }
+                        }
+                    }
+                    tableHtml += `<td>${symbol}</td>`;
+                }
+                tableHtml += `</tr>`;
+            }
+            tableHtml += `</table>`;
+
+            // 最下方標記符號意義
+            tableHtml += `<div style="margin-top: 10px; font-family: DFKai-SB, MingLiU, serif; font-size: 10pt; text-align: left;">
+                備註： ✓ = 已潔牙 ， ✗ = 未完成 ， △ = 請假
+            </div>`;
+
+            // 包裝為 Word 可讀的 HTML 格式，設定邊界 1cm 與直向列印
+            const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset='utf-8'>
+<title>${docTitle}</title>
+<style>
+    @page WordSection1 {
+        size: 21cm 29.7cm; /* 設定直向 A4 */
+        margin: 1.0cm 1.0cm 1.0cm 1.0cm; /* 上下左右邊界 1cm */
+        mso-header-margin: 1.0cm;
+        mso-footer-margin: 1.0cm;
+    }
+    div.WordSection1 { page: WordSection1; }
+</style>
+</head>
+<body>
+<div class="WordSection1">`;
+            const footer = "</div></body></html>";
+            const sourceHTML = header + tableHtml + footer;
+
+            // 觸發下載檔案
+            const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+            const fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = `${twYear}年${monthNum}月_${classNameStr}_潔牙紀錄表.doc`;
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+
+            showToast('📄 報表匯出成功！');
+        });
+        
+        // 班級選擇器邏輯
+        let tempGradeIdx = gradeIdx;
+        let tempClassNum = classNum;
+        
+        function updateClassDisplay() {
+            document.getElementById('display-grade').innerText = `${gradeStrs[tempGradeIdx]}年級`;
+            document.getElementById('display-class').innerText = `${tempClassNum}班`;
+        }
+
+        document.getElementById('btn-grade-up').addEventListener('click', () => {
+            tempGradeIdx = Math.min(5, tempGradeIdx + 1); 
+            updateClassDisplay();
+        });
+        document.getElementById('btn-grade-down').addEventListener('click', () => {
+            tempGradeIdx = Math.max(0, tempGradeIdx - 1);
+            updateClassDisplay();
+        });
+        document.getElementById('btn-class-up').addEventListener('click', () => {
+            tempClassNum = Math.min(20, tempClassNum + 1);
+            updateClassDisplay();
+        });
+        document.getElementById('btn-class-down').addEventListener('click', () => {
+            tempClassNum = Math.max(1, tempClassNum - 1);
+            updateClassDisplay();
+        });
+        
+        document.getElementById('btn-settings').addEventListener('click', () => {
+            tempGradeIdx = gradeIdx;
+            tempClassNum = classNum;
+            updateClassDisplay();
+            
+            document.getElementById('input-total-students').value = totalStudents;
+            document.getElementById('input-student-names').value = studentNames.join('\n');
+            modalSettings.classList.remove('hidden');
+            modalSettings.classList.add('flex');
+        });
+        
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.target.closest('.fixed').classList.add('hidden');
+                e.target.closest('.fixed').classList.remove('flex');
+            });
+        });
+        
+        // 一鍵全部完成功能
+        document.getElementById('btn-complete-all').addEventListener('click', () => {
+            studentData.forEach(s => {
+                // 若為 0 (未完成) 則改為 1 (已潔牙)；自動略過 2 (請假)
+                if (s.status === 0) s.status = 1; 
+            });
+            saveData(false);
+            renderCards();
+            modalSettings.classList.add('hidden');
+            modalSettings.classList.remove('flex');
+            showToast('✨ 已將全班轉為已潔牙！');
+        });
+        
+        // 一鍵全部重設功能
+        document.getElementById('btn-reset-all').addEventListener('click', () => {
+            showConfirm('一鍵全部重設', '確定要將全班狀態重設為「未完成」嗎？', '🔄', () => {
+                studentData.forEach(s => {
+                    s.status = 0; 
+                });
+                saveData(false);
+                renderCards();
+                modalSettings.classList.add('hidden');
+                modalSettings.classList.remove('flex');
+                showToast('🔄 已將全班狀態重設！');
+            });
+        });
+
+        // 儲存姓名與人數設定
+        document.getElementById('btn-save-settings').addEventListener('click', () => {
+            gradeIdx = tempGradeIdx;
+            classNum = tempClassNum;
+            classNameStr = `${gradeStrs[gradeIdx]}年${classNum}班`;
+            
+            const newTotal = parseInt(document.getElementById('input-total-students').value);
+            const namesStr = document.getElementById('input-student-names').value;
+            // 過濾空白行
+            const newNames = namesStr.split('\n').map(n => n.trim()).filter(n => n.length > 0 || n === "");
+            
+            localStorage.setItem('tb_grade_idx', gradeIdx);
+            localStorage.setItem('tb_class_num', classNum);
+            localStorage.setItem('tb_class_name', classNameStr);
+            localStorage.setItem('tb_total_students', newTotal);
+            localStorage.setItem('tb_student_names', JSON.stringify(newNames));
+            
+            totalStudents = newTotal;
+            studentNames = newNames;
+            
+            initGrid();
+            modalSettings.classList.add('hidden');
+            modalSettings.classList.remove('flex');
+            showToast('⚙️ 班級設定已更新！');
+        });
+        
+        // --- 資料管理功能 ---
+        // 1. 備份資料
+        document.getElementById('btn-backup').addEventListener('click', () => {
+            const backupData = {
+                className: localStorage.getItem('tb_class_name') || '一年一班',
+                totalStudents: parseInt(localStorage.getItem('tb_total_students')) || 30,
+                studentNames: JSON.parse(localStorage.getItem('tb_student_names') || '[]'),
+                records: JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}')
+            };
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            
+            const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+            downloadAnchorNode.setAttribute("download", `${backupData.className}_備份_${dateStr}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            showToast('📦 備份已下載完成！');
+        });
+
+        // 2. 匯入資料
+        document.getElementById('btn-import-trigger').addEventListener('click', () => {
+            document.getElementById('input-import-file').click();
+        });
+
+        document.getElementById('input-import-file').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    if (importedData.className !== undefined) {
+                        localStorage.setItem('tb_class_name', importedData.className);
+                        classNameStr = importedData.className;
+                        let matchImport = classNameStr.match(/([一二三四五六])年(\d+)班/);
+                        if (matchImport) {
+                            gradeIdx = gradeStrs.indexOf(matchImport[1]) !== -1 ? gradeStrs.indexOf(matchImport[1]) : 0;
+                            classNum = parseInt(matchImport[2]) || 1;
+                            localStorage.setItem('tb_grade_idx', gradeIdx);
+                            localStorage.setItem('tb_class_num', classNum);
+                        }
+                    }
+                    if (importedData.totalStudents !== undefined) localStorage.setItem('tb_total_students', importedData.totalStudents);
+                    if (importedData.studentNames !== undefined) localStorage.setItem('tb_student_names', JSON.stringify(importedData.studentNames));
+                    if (importedData.records !== undefined) localStorage.setItem('tooth_brushing_records', JSON.stringify(importedData.records));
+                    
+                    classNameStr = importedData.className || '一年一班';
+                    totalStudents = importedData.totalStudents || 30;
+                    studentNames = importedData.studentNames || [];
+                    
+                    // 更新設定面板的輸入框
+                    tempGradeIdx = gradeIdx;
+                    tempClassNum = classNum;
+                    updateClassDisplay();
+                    document.getElementById('input-total-students').value = totalStudents;
+                    document.getElementById('input-student-names').value = studentNames.join('\n');
+
+                    initGrid(); // 重新載入畫面
+                    showToast('📥 資料已成功匯入！');
+                } catch (err) {
+                    showToast('❌ 匯入失敗：檔案格式不正確');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ''; // 清除選取的檔案，允許重複選取相同檔案
+        });
+
+        // 3. 刪除所有紀錄
+        document.getElementById('btn-delete-all-records').addEventListener('click', () => {
+            const recordsStr = localStorage.getItem('tooth_brushing_records');
+            let hasData = false;
+            try {
+                if (recordsStr) {
+                    const records = JSON.parse(recordsStr);
+                    if (Object.keys(records).length > 0) {
+                        hasData = true;
+                    }
+                }
+            } catch (e) {}
+
+            if (!hasData) {
+                showToast('⚠️ 目前無資料可刪除！');
+                return;
+            }
+
+            showConfirm('警告：刪除所有紀錄', '您確定要刪除「所有」的打卡紀錄嗎？', '🚨', () => {
+                showConfirm('最後確認', '刪除後將無法復原，只能透過備份檔還原。確定刪除？', '⚠️', () => {
+                    localStorage.removeItem('tooth_brushing_records');
+                    loadData(datePicker.value); // 重新載入當前畫面
+                    
+                    // 關閉設定面板讓使用者看到畫面更新
+                    modalSettings.classList.add('hidden');
+                    modalSettings.classList.remove('flex');
+                    
+                    showToast('🗑️ 所有紀錄已清空！');
+                });
+            });
+        });
+
+        // 渲染歷史紀錄清單 (含刪除按鈕)
+        function renderRecordsModal() {
+            const content = document.getElementById('records-content');
+            content.innerHTML = '';
+            const records = JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}');
+            const dates = Object.keys(records).sort().reverse();
+            
+            if (dates.length === 0) {
+                content.innerHTML = '<div class="text-center text-gray-500 text-2xl py-10 font-bold">目前尚無任何紀錄。</div>';
+                return;
+            }
+            
+            dates.forEach(date => {
+                const data = records[date];
+                const comp = data.filter(d => d.status === 1).length;
+                const uncomp = data.filter(d => d.status === 0).length;
+                const leave = data.filter(d => d.status === 2).length;
+                
+                const row = document.createElement('div');
+                row.className = 'bg-white dark:bg-gray-700 border-2 border-indigo-100 dark:border-gray-600 rounded-2xl p-5 mb-4 flex items-center justify-between flex-wrap gap-4 shadow-sm';
+                
+                // 左側日期與統計數據
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'flex items-center gap-6 flex-wrap flex-grow cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 p-2 rounded-xl transition-colors';
+                infoDiv.title = "點擊查看未完成與請假名單";
+                infoDiv.onclick = () => showDetails(date, data);
+                infoDiv.innerHTML = `
+                    <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400 w-36">${date}</div>
+                    <div class="flex gap-4 text-xl font-bold">
+                        <span class="text-red-500">👾 未完成: ${uncomp}</span>
+                        <span class="text-green-500">✨ 已完成: ${comp}</span>
+                        <span class="text-gray-500 dark:text-gray-300">😴 請假: ${leave}</span>
+                    </div>
+                `;
+                
+                // 右側刪除按鈕
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'bg-red-100 hover:bg-red-500 text-red-600 hover:text-white border-2 border-red-200 hover:border-red-500 transition-colors rounded-xl px-5 py-2 font-bold text-lg flex items-center gap-2';
+                deleteBtn.innerHTML = '🗑️ 刪除';
+                deleteBtn.onclick = () => {
+                    // 自訂確認對話框
+                    showConfirm('刪除當日紀錄', `確定要刪除 ${date} 的全班紀錄嗎？刪除後無法復原喔！`, '🗑️', () => {
+                        let recs = JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}');
+                        delete recs[date];
+                        localStorage.setItem('tooth_brushing_records', JSON.stringify(recs));
+                        renderRecordsModal(); // 重新渲染列表
+                        
+                        // 若刪除的是當前畫面選中的日期，同步清空主畫面
+                        if(datePicker.value === date) {
+                            loadData(date);
+                        }
+                        showToast(`🗑️ ${date} 的紀錄已刪除`);
+                    });
+                };
+                
+                row.appendChild(infoDiv);
+                row.appendChild(deleteBtn);
+                content.appendChild(row);
+            });
+        }
+        
+        // 顯示詳細名單
+        function showDetails(date, data) {
+            const uncompleted = data.filter(d => d.status === 0).map(d => d.id);
+            const leave = data.filter(d => d.status === 2).map(d => d.id);
+            
+            document.getElementById('details-title').innerText = `🔍 ${date} 詳細名單`;
+            
+            let html = '';
+            
+            // 未完成
+            html += `<div class="bg-red-100 dark:bg-red-900 border-2 border-red-300 dark:border-red-700 rounded-xl p-4 shadow-sm">
+                        <div class="text-red-700 dark:text-red-300 mb-2 border-b-2 border-red-200 dark:border-red-800 pb-2">👾 未完成名單 (${uncompleted.length}人)：</div>
+                        <div class="text-gray-800 dark:text-gray-100 leading-relaxed">${uncompleted.length > 0 ? uncompleted.join('、') : '無'}</div>
+                     </div>`;
+                     
+            // 請假
+            if (leave.length > 0) {
+                html += `<div class="bg-gray-200 dark:bg-gray-700 border-2 border-gray-400 dark:border-gray-500 rounded-xl p-4 shadow-sm mt-2">
+                            <div class="text-gray-700 dark:text-gray-300 mb-2 border-b-2 border-gray-300 dark:border-gray-600 pb-2">😴 請假名單 (${leave.length}人)：</div>
+                            <div class="text-gray-800 dark:text-gray-100 leading-relaxed">${leave.join('、')}</div>
+                         </div>`;
+            }
+            
+            document.getElementById('details-content').innerHTML = html;
+            const modalDetails = document.getElementById('modal-details');
+            modalDetails.classList.remove('hidden');
+            modalDetails.classList.add('flex');
+        }
+
+        // 深色/淺色模式切換
+        const themeBtn = document.getElementById('btn-theme');
+        // 從瀏覽器記憶中讀取主題設定，預設為淺色
+        let isDark = localStorage.getItem('tb_theme') === 'dark';
+        
+        // 網頁初始載入時自動套用記憶的主題
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+            themeBtn.innerText = '☀️';
+        } else {
+            document.documentElement.classList.remove('dark');
+            themeBtn.innerText = '🌙';
+        }
+
+        themeBtn.addEventListener('click', () => {
+            isDark = !isDark;
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                themeBtn.innerText = '☀️';
+                localStorage.setItem('tb_theme', 'dark'); // 記憶深色模式
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeBtn.innerText = '🌙';
+                localStorage.setItem('tb_theme', 'light'); // 記憶淺色模式
+            }
+        });
+        
+        // 全螢幕切換 (加入跨瀏覽器與舊型觸控面板相容性支援)
+        const fsBtn = document.getElementById('btn-fullscreen');
+        fsBtn.addEventListener('click', () => {
+            const docEl = document.documentElement;
+            const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+            
+            if (!isFullscreen) {
+                if (docEl.requestFullscreen) {
+                    docEl.requestFullscreen().catch(err => {
+                        showToast('⚠️ 目前環境限制全螢幕 (下載後執行即可正常)');
+                    });
+                } else if (docEl.webkitRequestFullscreen) { /* Safari 及舊版 Chrome/安卓 */
+                    docEl.webkitRequestFullscreen();
+                } else if (docEl.mozRequestFullScreen) { /* Firefox */
+                    docEl.mozRequestFullScreen();
+                } else if (docEl.msRequestFullscreen) { /* IE/Edge 舊版 */
+                    docEl.msRequestFullscreen();
+                } else {
+                    showToast('⚠️ 您的設備目前不支援全螢幕模式');
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        });
+        
+        // 監聽各種全螢幕狀態改變事件以切換圖示
+        function updateFsIcon() {
+            const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+            fsBtn.innerText = isFs ? '🗗' : '⛶';
+        }
+        document.addEventListener('fullscreenchange', updateFsIcon);
+        document.addEventListener('webkitfullscreenchange', updateFsIcon);
+        document.addEventListener('mozfullscreenchange', updateFsIcon);
+        document.addEventListener('MSFullscreenChange', updateFsIcon);
+        
+        // 啟動系統
+        initGrid();
+    </script>
+</body>
+</html>
