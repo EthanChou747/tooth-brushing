@@ -57,7 +57,7 @@
 
         <!-- 中間：標題與統計 -->
         <div class="flex items-center gap-4">
-            <h1 class="text-2xl font-black text-jp-text dark:text-white tracking-widest">✨ 班級潔牙打卡板 ✨</h1>
+            <h1 id="main-title" class="text-2xl font-black text-jp-text dark:text-white tracking-widest">✨ 班級潔牙打卡板 ✨</h1>
             <div class="flex gap-2 text-lg font-bold">
                 <span class="bg-jp-cardUncompleted text-jp-textUncompleted border-2 border-jp-borderUncompleted px-3 py-1 rounded-full shadow-sm">👾 未完成: <span id="stat-uncompleted">0</span></span>
                 <span class="bg-jp-cardCompleted text-jp-textCompleted border-2 border-jp-borderCompleted px-3 py-1 rounded-full shadow-sm">✨ 已潔牙: <span id="stat-completed">0</span></span>
@@ -231,7 +231,7 @@
         const gradeStrs = ['一', '二', '三', '四', '五', '六'];
         let gradeIdx = parseInt(localStorage.getItem('tb_grade_idx')) || 0;
         let classNum = parseInt(localStorage.getItem('tb_class_num')) || 1;
-        let classNameStr = localStorage.getItem('tb_class_name') || '一年一班';
+        let classNameStr = localStorage.getItem('tb_class_name') || '一年1班';
         
         // 嘗試從舊的 classNameStr 解析回索引 (為了相容以前的資料)
         let matchClassName = classNameStr.match(/([一二三四五六])年(\d+)班/);
@@ -239,6 +239,14 @@
             gradeIdx = gradeStrs.indexOf(matchClassName[1]) !== -1 ? gradeStrs.indexOf(matchClassName[1]) : gradeIdx;
             classNum = parseInt(matchClassName[2]) || classNum;
         }
+
+        // 更新主頁面與網頁標籤的標題
+        function updateMainTitle() {
+            const titleEl = document.getElementById('main-title');
+            if (titleEl) titleEl.innerText = `✨ ${classNameStr}潔牙打卡板 ✨`;
+            document.title = `${classNameStr}潔牙打卡板`;
+        }
+        updateMainTitle();
 
         let totalStudents = parseInt(localStorage.getItem('tb_total_students')) || 30;
         let studentNames = JSON.parse(localStorage.getItem('tb_student_names') || '[]');
@@ -637,6 +645,7 @@
             totalStudents = newTotal;
             studentNames = newNames;
             
+            updateMainTitle();
             initGrid();
             modalSettings.classList.add('hidden');
             modalSettings.classList.remove('flex');
@@ -647,7 +656,7 @@
         // 1. 備份資料
         document.getElementById('btn-backup').addEventListener('click', () => {
             const backupData = {
-                className: localStorage.getItem('tb_class_name') || '一年一班',
+                className: localStorage.getItem('tb_class_name') || '一年1班',
                 totalStudents: parseInt(localStorage.getItem('tb_total_students')) || 30,
                 studentNames: JSON.parse(localStorage.getItem('tb_student_names') || '[]'),
                 records: JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}')
@@ -694,9 +703,11 @@
                     if (importedData.studentNames !== undefined) localStorage.setItem('tb_student_names', JSON.stringify(importedData.studentNames));
                     if (importedData.records !== undefined) localStorage.setItem('tooth_brushing_records', JSON.stringify(importedData.records));
                     
-                    classNameStr = importedData.className || '一年一班';
+                    classNameStr = importedData.className || '一年1班';
                     totalStudents = importedData.totalStudents || 30;
                     studentNames = importedData.studentNames || [];
+                    
+                    updateMainTitle();
                     
                     // 更新設定面板的輸入框
                     tempGradeIdx = gradeIdx;
