@@ -743,7 +743,7 @@
             });
         }
 
-        // 匯出 Word 報表
+        // 匯出 Word 報表（抬頭順序：校名 -> 班級 -> 日期）
         const exportWordBtn = document.getElementById('btn-export-word');
         if (exportWordBtn) {
             exportWordBtn.addEventListener('click', () => {
@@ -759,8 +759,8 @@
                 const monthNum = parseInt(monthStr, 10);
 
                 const docTitle = `榮富國民小學潔牙紀錄表`;
-                const dateTitle = `${twYear} 年 ${monthNum} 月`;
                 const classTitle = `${classNameStr}`;
+                const dateTitle = `${twYear} 年 ${monthNum} 月`;
                 const daysInMonth = new Date(gregorianYear, monthNum, 0).getDate();
                 let records = {};
                 try {
@@ -769,10 +769,11 @@
                     records = {};
                 }
 
+                // 抬頭對調：第1行校名，第2行班級，第3行日期
                 let tableHtml = `<div style="text-align:center; font-family: DFKai-SB, MingLiU, '標楷體', serif;">`;
                 tableHtml += `<div style="font-size:16pt; font-weight:bold; margin-bottom: 5px;">${docTitle}</div>`;
-                tableHtml += `<div style="font-size:14pt; margin-bottom: 5px;">${dateTitle}</div>`;
-                tableHtml += `<div style="font-size:14pt; margin-bottom: 10px;">${classTitle}</div>`;
+                tableHtml += `<div style="font-size:14pt; margin-bottom: 5px;">${classTitle}</div>`;
+                tableHtml += `<div style="font-size:14pt; margin-bottom: 10px;">${dateTitle}</div>`;
                 tableHtml += `</div>`;
                 
                 tableHtml += `<table cellpadding="2" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: center; font-family: DFKai-SB, MingLiU, '標楷體', serif; font-size: 10pt; border: 2.5pt solid black;">`;
@@ -837,7 +838,7 @@
                 const fileDownload = document.createElement("a");
                 document.body.appendChild(fileDownload);
                 fileDownload.href = url;
-                fileDownload.download = `${twYear}年${monthNum}月_${classNameStr}_潔牙紀錄表.doc`;
+                fileDownload.download = `${classNameStr}_${twYear}年${monthNum}月_潔牙紀錄表.doc`;
                 fileDownload.click();
                 document.body.removeChild(fileDownload);
                 URL.revokeObjectURL(url);
