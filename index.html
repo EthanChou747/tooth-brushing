@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>班級潔牙打卡板</title>
+    <title>一年1班潔牙打卡板</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -14,22 +15,22 @@
                         darkBg: '#1a202c',
                         darkCard: '#2d3748',
                         darkText: '#e2e8f0',
-                        // 新增日式清新色系
+                        // 日式清新色系
                         jp: {
-                            bg: '#F7F6F2',           // 宣紙白/米白
-                            primary: '#8BA88E',      // 抹茶綠
-                            secondary: '#829FAC',    // 水藍
-                            accent: '#D4B895',       // 原木色
-                            danger: '#C4847D',       // 落栗/珊瑚紅
-                            text: '#5C5C5C',         // 炭灰文字
-                            cardUncompleted: '#F9EBEA', // 淡櫻色
+                            bg: '#F7F6F2',              // 宣紙白/米白
+                            primary: '#8BA88E',         // 抹茶綠
+                            secondary: '#829FAC',       // 水藍
+                            accent: '#D4B895',          // 原木色
+                            danger: '#C4847D',          // 落栗/珊瑚紅
+                            text: '#5C5C5C',            // 炭灰文字
+                            cardUncompleted: '#F9EBEA',    // 淡櫻色
                             textUncompleted: '#A87670', 
                             borderUncompleted: '#E8D0CE',
-                            cardCompleted: '#E9EFE9',   // 淡若草色
+                            cardCompleted: '#E9EFE9',      // 淡若草色
                             textCompleted: '#6A826B',
                             borderCompleted: '#CAD6CA',
-                            cardLeave: '#F2F2F2',       // 淺石灰
-                            textLeave: '#888888',
+                            cardLeave: '#F2F2F2',          // 淺石灰
+                            textLeave: '#757575',
                             borderLeave: '#D9D9D9'
                         }
                     }
@@ -38,48 +39,69 @@
         }
     </script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, 'Microsoft JhengHei', sans-serif; }
         .card-btn { transition: transform 0.1s, filter 0.2s; }
-        .card-btn:active { transform: scale(0.95); }
+        .card-btn:active { transform: scale(0.96); }
         /* 隱藏捲動軸確保大螢幕完美滿版 */
         ::-webkit-scrollbar { display: none; }
+        * { -webkit-tap-highlight-color: transparent; }
+        /* 細菌怪獸微呼吸動態 */
+        @keyframes monster-wobble {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.04) rotate(1.5deg); }
+        }
+        .monster-anim {
+            animation: monster-wobble 3s ease-in-out infinite;
+            transform-origin: center bottom;
+        }
     </style>
 </head>
-<body class="bg-jp-bg text-jp-text dark:bg-darkBg transition-colors h-screen overflow-hidden flex flex-col p-2 select-none">
+<body class="bg-[#F7F6F2] dark:bg-[#1a202c] text-[#5C5C5C] dark:text-[#e2e8f0] transition-colors h-screen overflow-hidden flex flex-col p-2 select-none">
     
     <!-- 頂部工具列 -->
-    <header class="bg-white dark:bg-darkCard rounded-2xl shadow-md p-3 mb-2 flex flex-wrap items-center justify-between gap-3 flex-shrink-0">
+    <header class="bg-white dark:bg-[#2d3748] rounded-2xl shadow-md p-3 mb-2 flex flex-wrap items-center justify-between gap-3 flex-shrink-0">
         <!-- 左側：時間與日期選擇 -->
         <div class="flex items-center gap-3">
-            <div id="clock" class="text-3xl font-black text-jp-secondary dark:text-indigo-400">12:00 PM</div>
-            <input type="date" id="date-picker" class="border-2 border-jp-secondary dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-1 text-lg font-bold outline-none focus:border-jp-secondary cursor-pointer">
+            <div id="clock" class="text-3xl font-black text-[#829FAC] dark:text-indigo-400">12:00 PM</div>
+            <input type="date" id="date-picker" class="border-2 border-[#829FAC] dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-1 text-lg font-bold outline-none focus:border-[#829FAC] cursor-pointer">
         </div>
 
         <!-- 中間：標題與統計 -->
         <div class="flex items-center gap-4">
-            <h1 id="main-title" class="text-2xl font-black text-jp-text dark:text-white tracking-widest">✨ 班級潔牙打卡板 ✨</h1>
+            <h1 id="main-title" class="text-2xl font-black text-[#5C5C5C] dark:text-white tracking-widest">✨ 一年1班潔牙打卡板 ✨</h1>
             <div class="flex gap-2 text-lg font-bold">
-                <span class="bg-jp-cardUncompleted text-jp-textUncompleted border-2 border-jp-borderUncompleted px-3 py-1 rounded-full shadow-sm">👾 未完成: <span id="stat-uncompleted">0</span></span>
-                <span class="bg-jp-cardCompleted text-jp-textCompleted border-2 border-jp-borderCompleted px-3 py-1 rounded-full shadow-sm">✨ 已潔牙: <span id="stat-completed">0</span></span>
+                <!-- 點擊查看未完成座號按鈕 -->
+                <button id="badge-uncompleted" title="點擊查看未完成座號清單" class="bg-[#F9EBEA] dark:bg-red-900/40 text-[#A87670] dark:text-red-200 border-2 border-[#E8D0CE] hover:border-[#A87670] dark:border-red-800 dark:hover:border-red-400 px-3 py-1 rounded-full shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all">
+                    <span id="stat-monster-icon" class="w-6 h-6 flex items-center justify-center"></span> 
+                    未完成: <span id="stat-uncompleted">0</span>
+                </button>
+                <!-- 點擊查看已潔牙座號按鈕 -->
+                <button id="badge-completed" title="點擊查看已潔牙座號清單" class="bg-[#E9EFE9] dark:bg-green-900/40 text-[#6A826B] dark:text-green-200 border-2 border-[#CAD6CA] hover:border-[#6A826B] dark:border-green-800 dark:hover:border-green-400 px-3 py-1 rounded-full shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all">
+                    <span>✨</span> 已潔牙: <span id="stat-completed">0</span>
+                </button>
             </div>
         </div>
 
         <!-- 右側：功能按鈕 -->
         <div class="flex items-center gap-2">
             <!-- 手動寫入紀錄按鈕 -->
-            <button id="btn-force-save" title="如要紀錄全班都沒潔牙才需按此鈕" class="bg-jp-primary hover:opacity-80 text-white rounded-xl px-4 py-2 font-bold shadow flex items-center gap-2 text-lg transition-opacity">
+            <button id="btn-force-save" title="如要紀錄全班都沒潔牙才需按此鈕" class="bg-[#8BA88E] hover:opacity-85 text-white rounded-xl px-4 py-2 font-bold shadow flex items-center gap-2 text-lg transition-opacity">
                 💾 強制存檔
             </button>
-            <button id="btn-records" class="bg-jp-secondary hover:opacity-80 text-white rounded-xl px-4 py-2 font-bold shadow flex items-center gap-2 text-lg transition-opacity">
+            <button id="btn-records" class="bg-[#829FAC] hover:opacity-85 text-white rounded-xl px-4 py-2 font-bold shadow flex items-center gap-2 text-lg transition-opacity">
                 📅 紀錄
             </button>
-            <button id="btn-settings" class="bg-jp-accent hover:opacity-80 text-white rounded-xl px-4 py-2 font-bold shadow flex items-center gap-2 text-lg transition-opacity">
+            <button id="btn-settings" class="bg-[#D4B895] hover:opacity-85 text-white rounded-xl px-4 py-2 font-bold shadow flex items-center gap-2 text-lg transition-opacity">
                 ⚙️ 設定
             </button>
-            <button id="btn-theme" class="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-xl p-2 font-bold shadow text-2xl w-12 h-12 flex items-center justify-center">
+            <button id="btn-theme" class="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-xl p-2 font-bold shadow text-2xl w-12 h-12 flex items-center justify-center transition-colors">
                 🌙
             </button>
-            <button id="btn-fullscreen" class="bg-jp-secondary hover:opacity-80 text-white rounded-xl p-2 font-bold shadow text-2xl w-12 h-12 flex items-center justify-center transition-opacity">
+            <!-- 靜音切換按鈕 -->
+            <button id="btn-sound" class="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-xl p-2 font-bold shadow text-2xl w-12 h-12 flex items-center justify-center transition-opacity" title="音效開關">
+                🔊
+            </button>
+            <button id="btn-fullscreen" class="bg-[#829FAC] hover:opacity-85 text-white rounded-xl p-2 font-bold shadow text-2xl w-12 h-12 flex items-center justify-center transition-opacity">
                 ⛶
             </button>
         </div>
@@ -96,19 +118,19 @@
     </div>
 
     <!-- 紀錄查詢面板 -->
-    <div id="modal-records" class="fixed inset-0 bg-black bg-opacity-60 hidden flex-col items-center justify-center z-50 p-4">
-        <div class="bg-white dark:bg-darkCard w-full max-w-5xl max-h-full flex flex-col rounded-3xl shadow-2xl overflow-hidden">
-            <div class="bg-jp-secondary text-white p-4 flex justify-between items-center text-2xl font-bold">
+    <div id="modal-records" class="fixed inset-0 bg-black/60 hidden flex-col items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-[#2d3748] w-full max-w-5xl max-h-full flex flex-col rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-[#829FAC] text-white p-4 flex justify-between items-center text-2xl font-bold">
                 <h2>📅 歷史紀錄查詢</h2>
-                <button class="close-modal bg-white text-jp-secondary rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-100 shadow">✖</button>
+                <button class="close-modal bg-white text-[#829FAC] rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-100 shadow">✖</button>
             </div>
             <!-- 匯出報表區塊 -->
-            <div class="bg-white dark:bg-gray-700 p-4 border-b-2 border-jp-secondary dark:border-gray-600 flex items-center justify-between flex-wrap gap-4">
+            <div class="bg-white dark:bg-gray-700 p-4 border-b-2 border-[#829FAC] dark:border-gray-600 flex items-center justify-between flex-wrap gap-4">
                 <div class="flex items-center gap-3">
-                    <label class="text-xl font-bold text-jp-text dark:text-gray-200">📊 匯出報表：</label>
-                    <input type="month" id="export-month" class="border-2 border-jp-secondary dark:border-gray-500 rounded-lg px-3 py-1 text-lg font-bold dark:bg-gray-600 dark:text-white">
+                    <label class="text-xl font-bold text-[#5C5C5C] dark:text-gray-200">📊 匯出報表：</label>
+                    <input type="month" id="export-month" class="border-2 border-[#829FAC] dark:border-gray-500 rounded-lg px-3 py-1 text-lg font-bold dark:bg-gray-600 dark:text-white">
                 </div>
-                <button id="btn-export-word" class="bg-jp-secondary hover:opacity-80 text-white rounded-xl px-5 py-2 font-bold shadow flex items-center gap-2 text-lg transition-opacity">
+                <button id="btn-export-word" class="bg-[#829FAC] hover:opacity-85 text-white rounded-xl px-5 py-2 font-bold shadow flex items-center gap-2 text-lg transition-opacity">
                     📄 匯出 Word
                 </button>
             </div>
@@ -118,16 +140,14 @@
         </div>
     </div>
 
-    <!-- 設定面板 -->
-    <div id="modal-settings" class="fixed inset-0 bg-black bg-opacity-60 hidden flex-col items-center justify-center z-50 p-4">
-        <!-- 這裡把 max-w-md 改成了 max-w-5xl 以支援橫式排版 -->
-        <div class="bg-white dark:bg-darkCard w-full max-w-5xl max-h-full flex flex-col rounded-3xl shadow-2xl overflow-hidden">
-            <div class="bg-jp-accent text-white p-4 flex justify-between items-center text-2xl font-bold">
+    <!-- 設定面板 (橫式雙欄排版) -->
+    <div id="modal-settings" class="fixed inset-0 bg-black/60 hidden flex-col items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-[#2d3748] w-full max-w-5xl max-h-full flex flex-col rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-[#D4B895] text-white p-4 flex justify-between items-center text-2xl font-bold">
                 <h2>⚙️ 設定</h2>
-                <button class="close-modal bg-white text-jp-accent rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-100 shadow">✖</button>
+                <button class="close-modal bg-white text-[#D4B895] rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-100 shadow">✖</button>
             </div>
             
-            <!-- 改用 grid 雙欄排版 -->
             <div class="p-6 overflow-y-auto flex-grow grid grid-cols-1 md:grid-cols-2 gap-8 dark:text-white">
                 
                 <!-- 左側：班級資料設定 -->
@@ -137,28 +157,28 @@
                         <div class="flex items-center gap-4">
                             <!-- 年級上下調整 -->
                             <div class="flex flex-col items-center bg-gray-50 dark:bg-gray-700 rounded-xl p-2 shadow-inner w-32 border border-gray-200 dark:border-gray-600">
-                                <button id="btn-grade-up" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-jp-secondary font-bold active:bg-gray-200">▲</button>
-                                <div id="display-grade" class="py-2 text-2xl font-black text-jp-text dark:text-white">一年級</div>
-                                <button id="btn-grade-down" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-jp-secondary font-bold active:bg-gray-200">▼</button>
+                                <button id="btn-grade-up" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-[#829FAC] font-bold active:bg-gray-200">▲</button>
+                                <div id="display-grade" class="py-2 text-2xl font-black text-[#5C5C5C] dark:text-white">一年級</div>
+                                <button id="btn-grade-down" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-[#829FAC] font-bold active:bg-gray-200">▼</button>
                             </div>
                             <div class="text-3xl font-black text-gray-300">-</div>
                             <!-- 班級上下調整 -->
                             <div class="flex flex-col items-center bg-gray-50 dark:bg-gray-700 rounded-xl p-2 shadow-inner w-32 border border-gray-200 dark:border-gray-600">
-                                <button id="btn-class-up" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-jp-secondary font-bold active:bg-gray-200">▲</button>
-                                <div id="display-class" class="py-2 text-2xl font-black text-jp-text dark:text-white">1班</div>
-                                <button id="btn-class-down" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-jp-secondary font-bold active:bg-gray-200">▼</button>
+                                <button id="btn-class-up" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-[#829FAC] font-bold active:bg-gray-200">▲</button>
+                                <div id="display-class" class="py-2 text-2xl font-black text-[#5C5C5C] dark:text-white">1班</div>
+                                <button id="btn-class-down" class="w-full h-10 bg-white dark:bg-gray-600 rounded-lg shadow hover:bg-gray-50 flex items-center justify-center text-xl text-[#829FAC] font-bold active:bg-gray-200">▼</button>
                             </div>
                         </div>
                     </div>
                     <div>
                         <label class="block text-lg font-bold mb-2">班級人數</label>
-                        <input type="number" id="input-total-students" class="w-full border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-xl p-2 text-xl focus:border-jp-secondary outline-none" min="1" max="60" value="30">
+                        <input type="number" id="input-total-students" class="w-full border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-xl p-2 text-xl focus:border-[#829FAC] outline-none" min="1" max="60" value="30">
                     </div>
                     <div class="flex-grow flex flex-col">
                         <label class="block text-lg font-bold mb-2">學生姓名清單 (每行輸入一位)</label>
-                        <textarea id="input-student-names" class="w-full flex-grow border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-xl p-2 text-lg leading-relaxed resize-none min-h-[12rem] focus:border-jp-secondary outline-none" placeholder="王小明&#10;陳小華&#10;..."></textarea>
+                        <textarea id="input-student-names" class="w-full flex-grow border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-xl p-2 text-lg leading-relaxed resize-none min-h-[12rem] focus:border-[#829FAC] outline-none" placeholder="王小明&#10;陳小華&#10;..."></textarea>
                     </div>
-                    <button id="btn-save-settings" class="w-full bg-jp-secondary hover:opacity-80 text-white font-bold py-3 rounded-xl text-xl shadow mt-2 transition-opacity">
+                    <button id="btn-save-settings" class="w-full bg-[#829FAC] hover:opacity-85 text-white font-bold py-3 rounded-xl text-xl shadow mt-2 transition-opacity">
                         💾 儲存設定並重新載入
                     </button>
                 </div>
@@ -166,28 +186,28 @@
                 <!-- 右側：快捷操作與資料管理 -->
                 <div class="flex flex-col gap-4">
                     <!-- 快捷操作 -->
-                    <div class="bg-jp-bg dark:bg-gray-800 p-4 rounded-xl border-2 border-white dark:border-gray-700 shadow-inner">
-                        <h3 class="text-xl font-bold mb-4 text-jp-text dark:text-gray-200">⚡ 快捷操作</h3>
-                        <button id="btn-complete-all" class="w-full bg-jp-primary hover:opacity-80 text-white font-bold py-3 rounded-xl text-xl shadow mb-3 transition-opacity">
+                    <div class="bg-[#F7F6F2] dark:bg-gray-800 p-4 rounded-xl border-2 border-white dark:border-gray-700 shadow-inner">
+                        <h3 class="text-xl font-bold mb-4 text-[#5C5C5C] dark:text-gray-200">⚡ 快捷操作</h3>
+                        <button id="btn-complete-all" class="w-full bg-[#8BA88E] hover:opacity-85 text-white font-bold py-3 rounded-xl text-xl shadow mb-3 transition-opacity">
                             ✨ 一鍵全班已潔牙
                         </button>
-                        <button id="btn-reset-all" class="w-full bg-jp-danger hover:opacity-80 text-white font-bold py-3 rounded-xl text-xl shadow transition-opacity">
+                        <button id="btn-reset-all" class="w-full bg-[#C4847D] hover:opacity-85 text-white font-bold py-3 rounded-xl text-xl shadow transition-opacity">
                             🔄 一鍵全部重設
                         </button>
                     </div>
                     
                     <!-- 資料管理專區 -->
-                    <div class="bg-jp-bg dark:bg-gray-800 p-4 rounded-xl border-2 border-white dark:border-gray-700 shadow-inner flex-grow flex flex-col">
-                        <h3 class="text-xl font-bold mb-4 text-jp-text dark:text-gray-200">🗄️ 資料管理</h3>
+                    <div class="bg-[#F7F6F2] dark:bg-gray-800 p-4 rounded-xl border-2 border-white dark:border-gray-700 shadow-inner flex-grow flex flex-col">
+                        <h3 class="text-xl font-bold mb-4 text-[#5C5C5C] dark:text-gray-200">🗄️ 資料管理</h3>
                         <div class="flex flex-col gap-3 flex-grow justify-center">
-                            <button id="btn-backup" class="bg-jp-accent hover:opacity-80 text-white rounded-lg px-4 py-3 font-bold shadow flex items-center justify-center gap-2 text-lg transition-opacity">
+                            <button id="btn-backup" class="bg-[#D4B895] hover:opacity-85 text-white rounded-lg px-4 py-3 font-bold shadow flex items-center justify-center gap-2 text-lg transition-opacity">
                                 📦 一鍵備份資料
                             </button>
-                            <button id="btn-import-trigger" class="bg-jp-secondary hover:opacity-80 text-white rounded-lg px-4 py-3 font-bold shadow flex items-center justify-center gap-2 text-lg transition-opacity">
+                            <button id="btn-import-trigger" class="bg-[#829FAC] hover:opacity-85 text-white rounded-lg px-4 py-3 font-bold shadow flex items-center justify-center gap-2 text-lg transition-opacity">
                                 📥 一鍵匯入資料
                             </button>
                             <input type="file" id="input-import-file" accept=".json" class="hidden">
-                            <button id="btn-delete-all-records" class="bg-jp-danger hover:opacity-80 text-white rounded-lg px-4 py-3 font-bold shadow flex items-center justify-center gap-2 text-lg mt-2 transition-opacity">
+                            <button id="btn-delete-all-records" class="bg-[#C4847D] hover:opacity-85 text-white rounded-lg px-4 py-3 font-bold shadow flex items-center justify-center gap-2 text-lg mt-2 transition-opacity">
                                 🚨 刪除所有打卡紀錄
                             </button>
                         </div>
@@ -198,72 +218,315 @@
         </div>
     </div>
 
-    <!-- 紀錄詳細視窗 -->
-    <div id="modal-details" class="fixed inset-0 bg-black bg-opacity-60 hidden flex-col items-center justify-center z-[60] p-4">
-        <div class="bg-white dark:bg-darkCard w-full max-w-lg max-h-full flex flex-col rounded-3xl shadow-2xl overflow-hidden">
-            <div class="bg-jp-primary text-white p-4 flex justify-between items-center text-2xl font-bold">
+    <!-- 紀錄詳細視窗 (置頂浮現) -->
+    <div id="modal-details" class="fixed inset-0 bg-black/60 hidden flex-col items-center justify-center z-[70] p-4">
+        <div class="bg-white dark:bg-[#2d3748] w-full max-w-lg max-h-full flex flex-col rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
+            <div class="bg-[#8BA88E] text-white p-4 flex justify-between items-center text-2xl font-bold">
                 <h2 id="details-title">🔍 詳細名單</h2>
-                <button class="close-modal bg-white text-jp-primary rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-100 shadow">✖</button>
+                <button class="close-modal bg-white text-[#8BA88E] rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-100 shadow">✖</button>
             </div>
-            <div class="p-6 overflow-y-auto flex-grow flex flex-col gap-4 dark:text-white bg-jp-bg dark:bg-gray-800 text-xl font-bold" id="details-content">
+            <div class="p-6 overflow-y-auto flex-grow flex flex-col gap-4 dark:text-white bg-[#F7F6F2] dark:bg-gray-800 text-xl font-bold" id="details-content">
                 <!-- 動態填入 -->
             </div>
         </div>
     </div>
 
-    <!-- 自訂確認對話框 (取代內建 confirm) -->
-    <div id="custom-dialog" class="fixed inset-0 bg-black bg-opacity-60 hidden flex-col items-center justify-center z-[150] p-4">
-        <div class="bg-white dark:bg-darkCard w-full max-w-md flex flex-col rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="custom-dialog-box">
+    <!-- 自訂確認對話框 -->
+    <div id="custom-dialog" class="fixed inset-0 bg-black/60 hidden flex-col items-center justify-center z-[150] p-4">
+        <div class="bg-white dark:bg-[#2d3748] w-full max-w-md flex flex-col rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="custom-dialog-box">
             <div class="p-6 text-center">
                 <div id="custom-dialog-icon" class="text-5xl mb-4">⚠️</div>
-                <h3 id="custom-dialog-title" class="text-2xl font-bold text-jp-text dark:text-white mb-2">確認</h3>
+                <h3 id="custom-dialog-title" class="text-2xl font-bold text-[#5C5C5C] dark:text-white mb-2">確認</h3>
                 <p id="custom-dialog-message" class="text-lg text-gray-500 dark:text-gray-300 mb-6">您確定要執行此操作嗎？</p>
                 <div class="flex justify-center gap-4">
-                    <button id="custom-dialog-cancel" class="bg-gray-200 hover:bg-gray-300 text-jp-text dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-xl px-6 py-2 font-bold text-lg transition-colors">取消</button>
-                    <button id="custom-dialog-confirm" class="bg-jp-danger hover:opacity-80 text-white rounded-xl px-6 py-2 font-bold text-lg transition-opacity">確定</button>
+                    <button id="custom-dialog-cancel" class="bg-gray-200 hover:bg-gray-300 text-[#5C5C5C] dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-xl px-6 py-2 font-bold text-lg transition-colors">取消</button>
+                    <button id="custom-dialog-confirm" class="bg-[#C4847D] hover:opacity-85 text-white rounded-xl px-6 py-2 font-bold text-lg transition-opacity">確定</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 核心狀態
+        // ==========================================
+        // 安全儲存介面：防止在本機檔案與預覽中拋錯
+        // ==========================================
+        const memoryStorage = {};
+        const storage = {
+            getItem(key) {
+                try {
+                    if (typeof window !== 'undefined' && window.localStorage) {
+                        const val = window.localStorage.getItem(key);
+                        if (val !== null) return val;
+                    }
+                } catch (e) {}
+                return memoryStorage[key] !== undefined ? memoryStorage[key] : null;
+            },
+            setItem(key, value) {
+                try {
+                    if (typeof window !== 'undefined' && window.localStorage) {
+                        window.localStorage.setItem(key, value);
+                    }
+                } catch (e) {}
+                memoryStorage[key] = String(value);
+            },
+            removeItem(key) {
+                try {
+                    if (typeof window !== 'undefined' && window.localStorage) {
+                        window.localStorage.removeItem(key);
+                    }
+                } catch (e) {}
+                delete memoryStorage[key];
+            }
+        };
+
+        // ==========================================
+        // 輕柔原生音效合成器 (100% 離線 Web Audio API)
+        // ==========================================
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) audioCtx = new AudioCtx();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        let isMuted = storage.getItem('tb_sound_muted') === 'true';
+
+        function playSoftTone(type = 'click') {
+            if (isMuted) return;
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = 'sine'; // 柔和正弦波
+
+                if (type === 'complete') {
+                    // ✨ 潔牙完成：輕柔微升的叮咚雙音
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.12); // G5
+                    gain.gain.setValueAtTime(0.09, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.22);
+                } else if (type === 'leave') {
+                    // 🏠 請假在家：溫和低沉的水滴木質音
+                    osc.frequency.setValueAtTime(440, now); // A4
+                    osc.frequency.exponentialRampToValueAtTime(329.63, now + 0.1); // E4
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.16);
+                } else {
+                    // 👾 重設或點擊：輕柔氣泡啵聲
+                    osc.frequency.setValueAtTime(330, now);
+                    osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                }
+            } catch (e) {}
+        }
+
+        // ==========================================
+        // 每日 SVG 基因拼裝演算法 (今日蛀牙怪)
+        // ==========================================
+        function generateMonsterSVG(dateStr, customClass = "w-full h-full max-h-full max-w-[95%] object-contain") {
+            let hash = 0;
+            const str = dateStr || "default-monster";
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            hash = Math.abs(hash);
+
+            const palettes = [
+                { main: '#A855F7', dark: '#7E22CE', belly: '#F3E8FF' }, // 葡萄紫怪
+                { main: '#EC4899', dark: '#BE185D', belly: '#FCE7F3' }, // 莓果粉怪
+                { main: '#10B981', dark: '#047857', belly: '#D1FAE5' }, // 黏液綠怪
+                { main: '#F59E0B', dark: '#B45309', belly: '#FEF3C7' }, // 橘子淘氣怪
+                { main: '#06B6D4', dark: '#0E7490', belly: '#CFFAFE' }, // 冰晶水藍怪
+                { main: '#8B5CF6', dark: '#6D28D9', belly: '#EDE9FE' }, // 丁香小精靈
+                { main: '#84CC16', dark: '#4D7C0F', belly: '#ECFCCB' }, // 芥末黃綠怪
+                { main: '#F43F5E', dark: '#BE123C', belly: '#FFE4E6' }  // 珊瑚紅惡魔
+            ];
+
+            const color = palettes[hash % palettes.length];
+            const bodyType = (hash >> 2) % 4;
+            const eyeType = (hash >> 5) % 4;
+            const mouthType = (hash >> 8) % 4;
+            const hornsType = (hash >> 11) % 4;
+
+            // (1) 頭頂特徵 / 角 / 觸角
+            let hornsSvg = '';
+            if (hornsType === 0) {
+                hornsSvg = `<path d="M50 16 Q48 5 40 4" stroke="${color.dark}" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <circle cx="40" cy="4" r="5" fill="${color.belly}" stroke="${color.dark}" stroke-width="2"/>`;
+            } else if (hornsType === 1) {
+                hornsSvg = `<path d="M30 22 C26 9, 14 8, 18 26 Z M70 22 C74 9, 86 8, 82 26 Z" fill="${color.dark}"/>`;
+            } else if (hornsType === 2) {
+                hornsSvg = `<path d="M50 16 Q54 4 62 4 Q55 10 50 16 Z M50 16 Q46 6 39 7 Q45 12 50 16 Z" fill="#4ADE80" stroke="#166534" stroke-width="1.5"/>`;
+            } else {
+                hornsSvg = `<circle cx="42" cy="10" r="4" fill="${color.belly}" stroke="${color.dark}" stroke-width="1.5" opacity="0.8"/>
+                            <circle cx="58" cy="8" r="3" fill="${color.belly}" stroke="${color.dark}" stroke-width="1.5" opacity="0.8"/>`;
+            }
+
+            // (2) 身體輪廓
+            let bodySvg = '';
+            if (bodyType === 0) {
+                bodySvg = `<path d="M50 16 C75 16, 88 28, 88 53 C88 78, 76 87, 50 87 C24 87, 12 78, 12 53 C12 28, 25 16, 50 16 Z" fill="${color.main}" stroke="${color.dark}" stroke-width="4"/>`;
+            } else if (bodyType === 1) {
+                bodySvg = `<path d="M50 14 C68 14, 86 45, 86 70 C86 86, 70 87, 50 87 C30 87, 14 86, 14 70 C14 45, 32 14, 50 14 Z" fill="${color.main}" stroke="${color.dark}" stroke-width="4"/>`;
+            } else if (bodyType === 2) {
+                bodySvg = `<rect x="15" y="18" width="70" height="69" rx="24" fill="${color.main}" stroke="${color.dark}" stroke-width="4"/>`;
+            } else {
+                bodySvg = `<path d="M16 52 C16 25, 30 14, 50 14 C70 14, 84 25, 84 52 C84 72, 85 86, 75 84 C67 82, 63 88, 50 88 C37 88, 33 82, 25 84 C15 86, 16 72, 16 52 Z" fill="${color.main}" stroke="${color.dark}" stroke-width="4"/>`;
+            }
+
+            const bellySvg = `<ellipse cx="50" cy="64" rx="19" ry="13" fill="${color.belly}" opacity="0.6"/>`;
+            const blushSvg = `<circle cx="25" cy="53" r="4.5" fill="#F43F5E" opacity="0.35"/>
+                              <circle cx="75" cy="53" r="4.5" fill="#F43F5E" opacity="0.35"/>`;
+
+            // (3) 眼睛造型
+            let eyesSvg = '';
+            if (eyeType === 0) {
+                eyesSvg = `<circle cx="50" cy="41" r="15" fill="white" stroke="${color.dark}" stroke-width="3"/>
+                           <circle cx="50" cy="41" r="7.5" fill="#1E293B"/>
+                           <circle cx="53" cy="38" r="3" fill="white"/>`;
+            } else if (eyeType === 1) {
+                eyesSvg = `<circle cx="36" cy="42" r="10.5" fill="white" stroke="${color.dark}" stroke-width="2.5"/>
+                           <circle cx="37" cy="42" r="5.5" fill="#1E293B"/>
+                           <circle cx="39" cy="40" r="2" fill="white"/>
+                           <circle cx="64" cy="42" r="10.5" fill="white" stroke="${color.dark}" stroke-width="2.5"/>
+                           <circle cx="63" cy="42" r="5.5" fill="#1E293B"/>
+                           <circle cx="65" cy="40" r="2" fill="white"/>`;
+            } else if (eyeType === 2) {
+                eyesSvg = `<circle cx="30" cy="44" r="8" fill="white" stroke="${color.dark}" stroke-width="2"/>
+                           <circle cx="30" cy="44" r="4" fill="#1E293B"/>
+                           <circle cx="50" cy="34" r="9.5" fill="white" stroke="${color.dark}" stroke-width="2"/>
+                           <circle cx="50" cy="34" r="4.5" fill="#1E293B"/>
+                           <circle cx="52" cy="32" r="2" fill="white"/>
+                           <circle cx="70" cy="44" r="8" fill="white" stroke="${color.dark}" stroke-width="2"/>
+                           <circle cx="70" cy="44" r="4" fill="#1E293B"/>`;
+            } else {
+                eyesSvg = `<circle cx="35" cy="42" r="12" fill="white" stroke="${color.dark}" stroke-width="2.5"/>
+                           <circle cx="36" cy="43" r="5.5" fill="#1E293B"/>
+                           <circle cx="39" cy="40" r="2.2" fill="white"/>
+                           <circle cx="66" cy="44" r="8" fill="white" stroke="${color.dark}" stroke-width="2.5"/>
+                           <circle cx="65" cy="45" r="3.5" fill="#1E293B"/>`;
+            }
+
+            // (4) 嘴巴表情
+            let mouthSvg = '';
+            if (mouthType === 0) {
+                mouthSvg = `<path d="M36 59 Q50 71 64 59" stroke="${color.dark}" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <polygon points="43,60 46,67 49,60" fill="white" stroke="${color.dark}" stroke-width="1.2"/>
+                            <polygon points="51,60 54,67 57,60" fill="white" stroke="${color.dark}" stroke-width="1.2"/>`;
+            } else if (mouthType === 1) {
+                mouthSvg = `<path d="M38 59 Q50 67 62 59" stroke="${color.dark}" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <path d="M46 63 C46 73, 54 73, 54 63 Z" fill="#FB7185" stroke="${color.dark}" stroke-width="1.5"/>`;
+            } else if (mouthType === 2) {
+                mouthSvg = `<path d="M35 57 Q50 78 65 57 Z" fill="#881337" stroke="${color.dark}" stroke-width="2.5"/>
+                            <rect x="46" y="57" width="8" height="6.5" rx="1.5" fill="#FEF08A" stroke="${color.dark}" stroke-width="1.2"/>`;
+            } else {
+                mouthSvg = `<ellipse cx="50" cy="64" rx="7" ry="8.5" fill="#1E293B" stroke="${color.dark}" stroke-width="2"/>
+                            <ellipse cx="50" cy="62" rx="3.5" ry="4" fill="#E11D48"/>`;
+            }
+
+            return `
+                <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="${customClass} monster-anim filter drop-shadow select-none" xmlns="http://www.w3.org/2000/svg">
+                    ${hornsSvg}
+                    ${bodySvg}
+                    ${bellySvg}
+                    ${blushSvg}
+                    ${eyesSvg}
+                    ${mouthSvg}
+                </svg>
+            `;
+        }
+
+        // ==========================================
+        // 向量星芒圖案 (防止字體裁切，飽滿立體)
+        // ==========================================
+        function getSparkleSVG(customClass = "w-full h-full max-h-full max-w-[90%] object-contain") {
+            return `
+                <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" class="${customClass} filter drop-shadow select-none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="spkGradMain" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FFE066"/>
+                            <stop offset="50%" stop-color="#F59E0B"/>
+                            <stop offset="100%" stop-color="#D97706"/>
+                        </linearGradient>
+                        <linearGradient id="spkGradSmall" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FFF3B0"/>
+                            <stop offset="100%" stop-color="#FBBF24"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M50 14 Q50 48 16 50 Q50 52 50 86 Q50 52 84 50 Q50 48 50 14 Z" fill="url(#spkGradMain)" stroke="#B45309" stroke-width="2"/>
+                    <path d="M26 18 Q26 28 16 30 Q26 32 26 42 Q26 32 36 30 Q26 28 26 18 Z" fill="url(#spkGradSmall)" stroke="#B45309" stroke-width="1.5"/>
+                    <path d="M76 64 Q76 72 68 74 Q76 76 76 84 Q76 76 84 74 Q76 72 76 64 Z" fill="url(#spkGradSmall)" stroke="#B45309" stroke-width="1.5"/>
+                    <circle cx="50" cy="50" r="3.5" fill="#FFFFFF" opacity="0.9"/>
+                </svg>
+            `;
+        }
+
+        // 核心設定
         const gradeStrs = ['一', '二', '三', '四', '五', '六'];
-        let gradeIdx = parseInt(localStorage.getItem('tb_grade_idx')) || 0;
-        let classNum = parseInt(localStorage.getItem('tb_class_num')) || 1;
-        let classNameStr = localStorage.getItem('tb_class_name') || '一年1班';
+        let gradeIdx = parseInt(storage.getItem('tb_grade_idx')) || 0;
+        let classNum = parseInt(storage.getItem('tb_class_num')) || 1;
+        let classNameStr = storage.getItem('tb_class_name') || '一年1班';
         
-        // 嘗試從舊的 classNameStr 解析回索引 (為了相容以前的資料)
         let matchClassName = classNameStr.match(/([一二三四五六])年(\d+)班/);
         if (matchClassName) {
             gradeIdx = gradeStrs.indexOf(matchClassName[1]) !== -1 ? gradeStrs.indexOf(matchClassName[1]) : gradeIdx;
             classNum = parseInt(matchClassName[2]) || classNum;
         }
 
-        // 更新主頁面與網頁標籤的標題
         function updateMainTitle() {
             const titleEl = document.getElementById('main-title');
             if (titleEl) titleEl.innerText = `✨ ${classNameStr}潔牙打卡板 ✨`;
             document.title = `${classNameStr}潔牙打卡板`;
         }
-        updateMainTitle();
 
-        let totalStudents = parseInt(localStorage.getItem('tb_total_students')) || 30;
-        let studentNames = JSON.parse(localStorage.getItem('tb_student_names') || '[]');
+        let totalStudents = parseInt(storage.getItem('tb_total_students')) || 30;
+        let studentNames = [];
+        try {
+            studentNames = JSON.parse(storage.getItem('tb_student_names') || '[]');
+        } catch (e) {
+            studentNames = [];
+        }
         let studentData = [];
         
         const grid = document.getElementById('students-grid');
         const datePicker = document.getElementById('date-picker');
         const statUncompleted = document.getElementById('stat-uncompleted');
         const statCompleted = document.getElementById('stat-completed');
+        const statMonsterIcon = document.getElementById('stat-monster-icon');
+
+        const modalRecords = document.getElementById('modal-records');
+        const modalSettings = document.getElementById('modal-settings');
+        const modalDetails = document.getElementById('modal-details');
         
-        // 取得台灣時區今日日期 (避免 UTC 誤差)
         const today = new Date();
         const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-        datePicker.value = todayStr;
+        if (datePicker) datePicker.value = todayStr;
         
-        // 時鐘更新
         function updateClock() {
+            const clockEl = document.getElementById('clock');
+            if (!clockEl) return;
             const now = new Date();
             let hours = now.getHours();
             let minutes = now.getMinutes();
@@ -271,13 +534,13 @@
             hours = hours % 12;
             hours = hours ? hours : 12; 
             minutes = minutes < 10 ? '0' + minutes : minutes;
-            document.getElementById('clock').innerText = hours + ':' + minutes + ' ' + ampm;
+            clockEl.innerText = hours + ':' + minutes + ' ' + ampm;
         }
         setInterval(updateClock, 1000);
         updateClock();
         
-        // 網格初始化：依照人數動態分割，確保 1920x1080 不需捲動
         function initGrid() {
+            if (!grid) return;
             let cols = 5;
             if (totalStudents > 42) cols = 8;
             else if (totalStudents > 35) cols = 7;
@@ -288,15 +551,20 @@
             grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
             grid.style.gridAutoRows = `minmax(0, 1fr)`;
             
-            loadData(datePicker.value);
+            const currDate = (datePicker && datePicker.value) ? datePicker.value : todayStr;
+            loadData(currDate);
         }
         
-        // 載入該日資料
         function loadData(dateKey) {
-            const records = JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}');
+            let records = {};
+            try {
+                records = JSON.parse(storage.getItem('tooth_brushing_records') || '{}');
+            } catch (e) {
+                records = {};
+            }
+
             if (records[dateKey]) {
                 studentData = records[dateKey];
-                // 處理中途修改班級總人數的狀況
                 if (studentData.length < totalStudents) {
                     for(let i = studentData.length; i < totalStudents; i++) {
                         studentData.push({ id: i + 1, status: 0 });
@@ -310,41 +578,42 @@
             renderCards();
         }
         
-        // 智慧寫入紀錄
         function saveData(force = false) {
-            const dateKey = datePicker.value;
-            // 檢查是否有人刷牙或是請假 (狀態不為0)
+            const dateKey = (datePicker && datePicker.value) ? datePicker.value : todayStr;
             const hasActivity = studentData.some(s => s.status > 0);
-            let records = JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}');
+            let records = {};
+            try {
+                records = JSON.parse(storage.getItem('tooth_brushing_records') || '{}');
+            } catch (e) {
+                records = {};
+            }
             
-            // 【關鍵】如果全班都沒刷，且不是手動按「寫入紀錄」，就不要存這筆資料，並刪除該日空紀錄
             if (!hasActivity && !force) {
                 if (records[dateKey]) {
                     delete records[dateKey];
-                    localStorage.setItem('tooth_brushing_records', JSON.stringify(records));
+                    storage.setItem('tooth_brushing_records', JSON.stringify(records));
                 }
                 return;
             }
             
             records[dateKey] = studentData;
-            localStorage.setItem('tooth_brushing_records', JSON.stringify(records));
+            storage.setItem('tooth_brushing_records', JSON.stringify(records));
         }
         
-        // 顯示浮水印訊息
         function showToast(message) {
             const toast = document.getElementById('toast');
+            if (!toast) return;
             toast.innerText = message;
             toast.classList.remove('opacity-0');
             setTimeout(() => toast.classList.add('opacity-0'), 2500);
         }
 
-        // 顯示自訂確認對話框
         let confirmTimeoutId = null;
         function showConfirm(title, message, icon, onConfirm) {
             const dialog = document.getElementById('custom-dialog');
             const box = document.getElementById('custom-dialog-box');
+            if (!dialog || !box) return;
             
-            // 如果前一個視窗正在關閉中，取消它的隱藏動作（防止連續彈窗一閃而過）
             if (confirmTimeoutId) clearTimeout(confirmTimeoutId);
 
             document.getElementById('custom-dialog-title').innerText = title;
@@ -378,159 +647,180 @@
             });
         }
         
-        // 渲染學生卡片
+        // 渲染學生卡片（姓名微調縮小、圖形放大防切、請假為「🏠」）
         function renderCards() {
+            if (!grid) return;
             grid.innerHTML = '';
             let uncompleted = 0;
             let completed = 0;
+            const currentDateKey = (datePicker && datePicker.value) ? datePicker.value : todayStr;
+            
+            const todayMonsterSvg = generateMonsterSVG(currentDateKey);
+            const sparkleSvg = getSparkleSVG();
+            
+            if (statMonsterIcon) {
+                statMonsterIcon.innerHTML = generateMonsterSVG(currentDateKey, "w-6 h-6 object-contain");
+            }
             
             studentData.forEach((student, index) => {
                 const name = studentNames[index] || '';
                 
                 let bgClass = '';
-                let emoji = '';
+                let contentHTML = '';
+                
                 if (student.status === 0) {
-                    bgClass = 'bg-jp-cardUncompleted dark:bg-red-900 border-jp-borderUncompleted text-jp-textUncompleted dark:text-red-200';
-                    emoji = '👾'; // 更新為蛀牙小怪獸
+                    bgClass = 'bg-[#F9EBEA] dark:bg-red-900/40 border-[#E8D0CE] text-[#A87670] dark:text-red-200';
+                    contentHTML = todayMonsterSvg;
                     uncompleted++;
                 } else if (student.status === 1) {
-                    bgClass = 'bg-jp-cardCompleted dark:bg-green-900 border-jp-borderCompleted text-jp-textCompleted dark:text-green-200';
-                    emoji = '✨';
+                    bgClass = 'bg-[#E9EFE9] dark:bg-green-900/40 border-[#CAD6CA] text-[#6A826B] dark:text-green-200';
+                    contentHTML = sparkleSvg;
                     completed++;
                 } else if (student.status === 2) {
-                    bgClass = 'bg-jp-cardLeave dark:bg-gray-700 border-jp-borderLeave text-jp-textLeave dark:text-gray-300';
-                    emoji = '😴';
+                    bgClass = 'bg-[#F2F2F2] dark:bg-gray-700/60 border-[#D9D9D9] text-[#757575] dark:text-gray-300';
+                    contentHTML = '<span class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl filter drop-shadow select-none leading-none">🏠</span>';
                 }
                 
                 const card = document.createElement('button');
-                // 嚴格使用 flex-col 與 justify-between，保留座號與姓名空間
-                card.className = `card-btn flex flex-col justify-between items-center rounded-2xl border-b-[6px] p-2 h-full w-full overflow-hidden ${bgClass}`;
+                card.className = `card-btn flex flex-col justify-between items-center rounded-2xl border-b-[5px] md:border-b-[6px] p-1 md:p-1.5 h-full w-full overflow-hidden select-none ${bgClass}`;
                 card.onclick = () => {
                     student.status = (student.status + 1) % 3;
-                    saveData(false); // 觸發自動智慧儲存檢查
+                    if (student.status === 1) {
+                        playSoftTone('complete');
+                    } else if (student.status === 2) {
+                        playSoftTone('leave');
+                    } else {
+                        playSoftTone('click');
+                    }
+                    saveData(false);
                     renderCards();
                 };
                 
                 card.innerHTML = `
-                    <div class="text-xl md:text-2xl font-black w-full text-center leading-none mt-1">${student.id}號</div>
-                    <div class="text-4xl md:text-5xl lg:text-6xl flex-grow flex items-center justify-center my-1 filter drop-shadow-md">${emoji}</div>
-                    <div class="text-lg md:text-xl font-bold truncate w-full px-1 text-center leading-none h-6 mb-1">${name}</div>
+                    <div class="flex-shrink-0 text-sm sm:text-base md:text-lg font-black w-full text-center leading-tight pt-0.5">
+                        ${student.id}號
+                    </div>
+                    <div class="flex-1 min-h-0 min-w-0 w-full flex items-center justify-center p-0.5 overflow-hidden">
+                        ${contentHTML}
+                    </div>
+                    <div class="flex-shrink-0 w-full px-0.5 text-center leading-tight text-xs sm:text-sm md:text-base font-bold truncate h-5 md:h-6 flex items-center justify-center text-[#5C5C5C]/90 dark:text-gray-200" title="${name}">
+                        ${name ? name : '&nbsp;'}
+                    </div>
                 `;
                 grid.appendChild(card);
             });
             
-            statUncompleted.innerText = uncompleted;
-            statCompleted.innerText = completed;
+            if (statUncompleted) statUncompleted.innerText = uncompleted;
+            if (statCompleted) statCompleted.innerText = completed;
         }
         
-        // 切換日期自動載入
-        datePicker.addEventListener('change', (e) => {
-            loadData(e.target.value);
-        });
+        if (datePicker) {
+            datePicker.addEventListener('change', (e) => {
+                loadData(e.target.value);
+            });
+        }
         
-        // 手動寫入按鈕
-        document.getElementById('btn-force-save').addEventListener('click', () => {
-            saveData(true);
-            showToast('✅ 今日狀態已強制寫入紀錄！');
-        });
+        const forceSaveBtn = document.getElementById('btn-force-save');
+        if (forceSaveBtn) {
+            forceSaveBtn.addEventListener('click', () => {
+                saveData(true);
+                showToast('✅ 今日狀態已強制寫入紀錄！');
+            });
+        }
         
-        // 彈出視窗控制
-        const modalRecords = document.getElementById('modal-records');
-        const modalSettings = document.getElementById('modal-settings');
-        
-        document.getElementById('btn-records').addEventListener('click', () => {
-            // 初始化月份選擇器為當月
-            const exportMonthInput = document.getElementById('export-month');
-            if (!exportMonthInput.value) {
-                exportMonthInput.value = todayStr.substring(0, 7);
-            }
-            renderRecordsModal();
-            modalRecords.classList.remove('hidden');
-            modalRecords.classList.add('flex');
-        });
+        const recordsBtn = document.getElementById('btn-records');
+        if (recordsBtn) {
+            recordsBtn.addEventListener('click', () => {
+                const exportMonthInput = document.getElementById('export-month');
+                if (exportMonthInput && !exportMonthInput.value) {
+                    exportMonthInput.value = todayStr.substring(0, 7);
+                }
+                renderRecordsModal();
+                if (modalRecords) {
+                    modalRecords.classList.remove('hidden');
+                    modalRecords.classList.add('flex');
+                }
+            });
+        }
 
-        // 匯出 Word 報表功能
-        document.getElementById('btn-export-word').addEventListener('click', () => {
-            const monthVal = document.getElementById('export-month').value;
-            if (!monthVal) {
-                showToast('⚠️ 請先選擇月份！');
-                return;
-            }
-            
-            const [yearStr, monthStr] = monthVal.split('-');
-            const gregorianYear = parseInt(yearStr, 10);
-            const twYear = gregorianYear - 1911;
-            const monthNum = parseInt(monthStr, 10);
-
-            const docTitle = `榮富國民小學潔牙紀錄表`;
-            const subTitle = `${twYear} 年 ${monthNum} 月 ${classNameStr}`;
-            const daysInMonth = new Date(gregorianYear, monthNum, 0).getDate();
-            const records = JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}');
-
-            // 組合 Word 用的 HTML 表格
-            let tableHtml = `<div style="text-align:center; font-family: DFKai-SB, MingLiU, serif;">`;
-            tableHtml += `<div style="font-size:16pt; font-weight:bold; margin-bottom: 5px;">${docTitle}</div>`;
-            tableHtml += `<div style="font-size:14pt; margin-bottom: 10px;">${subTitle}</div>`;
-            tableHtml += `</div>`;
-            
-            // 外圍四邊加粗 (border: 2.5pt solid black)
-            tableHtml += `<table cellpadding="2" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: center; font-family: DFKai-SB, MingLiU, serif; font-size: 10pt; border: 2.5pt solid black;">`;
-            
-            // 表頭：固定 32 欄 (座號與 1~31 日) 標題字垂直排列，表頭淺灰底色
-            tableHtml += `<tr style="height: 50px; background-color: #f2f2f2;">`;
-            // 表頭第一格也加上下邊線加粗以區隔標題與內容
-            tableHtml += `<th style="width: 30px; white-space: nowrap; border: 1pt solid black; border-bottom: 2.5pt solid black;">座號</th>`;
-            for (let d = 1; d <= 31; d++) {
-                tableHtml += `<th style="layout-flow: vertical-ideographic; writing-mode: tb-rl; padding: 2px; border: 1pt solid black; border-bottom: 2.5pt solid black;">${d}日</th>`;
-            }
-            tableHtml += `</tr>`;
-
-            // 學生資料列
-            for (let s = 1; s <= totalStudents; s++) {
-                // 每 5 個座號下方邊線加粗(2.5pt)，其餘為一般細線(1pt)
-                let bottomBorder = (s % 5 === 0) ? '2.5pt solid black' : '1pt solid black';
+        // 匯出 Word 報表
+        const exportWordBtn = document.getElementById('btn-export-word');
+        if (exportWordBtn) {
+            exportWordBtn.addEventListener('click', () => {
+                const monthVal = document.getElementById('export-month').value;
+                if (!monthVal) {
+                    showToast('⚠️ 請先選擇月份！');
+                    return;
+                }
                 
-                tableHtml += `<tr>`;
-                // 第1欄：淺灰底色與粗體字
-                tableHtml += `<td style="background-color: #f2f2f2; font-weight: bold; border: 1pt solid black; border-bottom: ${bottomBorder};">${s}</td>`;
+                const [yearStr, monthStr] = monthVal.split('-');
+                const gregorianYear = parseInt(yearStr, 10);
+                const twYear = gregorianYear - 1911;
+                const monthNum = parseInt(monthStr, 10);
+
+                const docTitle = `榮富國民小學潔牙紀錄表`;
+                const dateTitle = `${twYear} 年 ${monthNum} 月`;
+                const classTitle = `${classNameStr}`;
+                const daysInMonth = new Date(gregorianYear, monthNum, 0).getDate();
+                let records = {};
+                try {
+                    records = JSON.parse(storage.getItem('tooth_brushing_records') || '{}');
+                } catch (e) {
+                    records = {};
+                }
+
+                let tableHtml = `<div style="text-align:center; font-family: DFKai-SB, MingLiU, '標楷體', serif;">`;
+                tableHtml += `<div style="font-size:16pt; font-weight:bold; margin-bottom: 5px;">${docTitle}</div>`;
+                tableHtml += `<div style="font-size:14pt; margin-bottom: 5px;">${dateTitle}</div>`;
+                tableHtml += `<div style="font-size:14pt; margin-bottom: 10px;">${classTitle}</div>`;
+                tableHtml += `</div>`;
                 
+                tableHtml += `<table cellpadding="2" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: center; font-family: DFKai-SB, MingLiU, '標楷體', serif; font-size: 10pt; border: 2.5pt solid black;">`;
+                
+                tableHtml += `<tr style="height: 50px; background-color: #f2f2f2;">`;
+                tableHtml += `<th style="width: 30px; white-space: nowrap; border: 1pt solid black; border-bottom: 2.5pt solid black;">座號</th>`;
                 for (let d = 1; d <= 31; d++) {
-                    let symbol = ''; // 預設無紀錄為空白
-                    
-                    // 只有在該月實際天數範圍內才去抓資料（例如 2月可能只有到 28日）
-                    if (d <= daysInMonth) {
-                        const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
-                        const dailyData = records[dateKey];
-                        if (dailyData) {
-                            const studentRecord = dailyData.find(st => st.id === s);
-                            if (studentRecord) {
-                                if (studentRecord.status === 1) symbol = '✓';
-                                else if (studentRecord.status === 0) symbol = '✗';
-                                else if (studentRecord.status === 2) symbol = '△';
-                            }
-                        }
-                    }
-                    // 將邊線粗細樣式直接寫入每一個 TD 確保 Word 完美讀取
-                    tableHtml += `<td style="border: 1pt solid black; border-bottom: ${bottomBorder};">${symbol}</td>`;
+                    tableHtml += `<th style="layout-flow: vertical-ideographic; writing-mode: tb-rl; padding: 2px; border: 1pt solid black; border-bottom: 2.5pt solid black;">${d}日</th>`;
                 }
                 tableHtml += `</tr>`;
-            }
-            tableHtml += `</table>`;
 
-            // 最下方標記符號意義
-            tableHtml += `<div style="margin-top: 10px; font-family: DFKai-SB, MingLiU, serif; font-size: 10pt; text-align: left;">
-                備註： ✓ = 已潔牙 ， ✗ = 未完成 ， △ = 請假
-            </div>`;
+                for (let s = 1; s <= totalStudents; s++) {
+                    let bottomBorder = (s % 5 === 0) ? '2.5pt solid black' : '1pt solid black';
+                    tableHtml += `<tr>`;
+                    tableHtml += `<td style="background-color: #f2f2f2; font-weight: bold; border: 1pt solid black; border-bottom: ${bottomBorder};">${s}</td>`;
+                    
+                    for (let d = 1; d <= 31; d++) {
+                        let symbol = '';
+                        if (d <= daysInMonth) {
+                            const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
+                            const dailyData = records[dateKey];
+                            if (dailyData) {
+                                const studentRecord = dailyData.find(st => st.id === s);
+                                if (studentRecord) {
+                                    if (studentRecord.status === 1) symbol = '✓';
+                                    else if (studentRecord.status === 0) symbol = '✗';
+                                    else if (studentRecord.status === 2) symbol = '△';
+                                }
+                            }
+                        }
+                        tableHtml += `<td style="border: 1pt solid black; border-bottom: ${bottomBorder};">${symbol}</td>`;
+                    }
+                    tableHtml += `</tr>`;
+                }
+                tableHtml += `</table>`;
 
-            // 包裝為 Word 可讀的 HTML 格式，設定邊界 1cm 與直向列印
-            const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                tableHtml += `<div style="margin-top: 10px; font-family: DFKai-SB, MingLiU, '標楷體', serif; font-size: 10pt; text-align: left;">
+                    備註： ✓ = 已潔牙 ， ✗ = 未完成 ， △ = 請假
+                </div>`;
+
+                const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
 <head>
 <meta charset='utf-8'>
 <title>${docTitle}</title>
 <style>
     @page WordSection1 {
-        size: 21cm 29.7cm; /* 設定直向 A4 */
-        margin: 1.0cm 1.0cm 1.0cm 1.0cm; /* 上下左右邊界 1cm */
+        size: 21cm 29.7cm;
+        margin: 1.0cm 1.0cm 1.0cm 1.0cm;
         mso-header-margin: 1.0cm;
         mso-footer-margin: 1.0cm;
     }
@@ -539,230 +829,264 @@
 </head>
 <body>
 <div class="WordSection1">`;
-            const footer = "</div></body></html>";
-            const sourceHTML = header + tableHtml + footer;
+                const footer = "</div></body></html>";
+                const sourceHTML = header + tableHtml + footer;
 
-            // 觸發下載檔案
-            const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
-            const fileDownload = document.createElement("a");
-            document.body.appendChild(fileDownload);
-            fileDownload.href = source;
-            fileDownload.download = `${twYear}年${monthNum}月_${classNameStr}_潔牙紀錄表.doc`;
-            fileDownload.click();
-            document.body.removeChild(fileDownload);
+                const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const fileDownload = document.createElement("a");
+                document.body.appendChild(fileDownload);
+                fileDownload.href = url;
+                fileDownload.download = `${twYear}年${monthNum}月_${classNameStr}_潔牙紀錄表.doc`;
+                fileDownload.click();
+                document.body.removeChild(fileDownload);
+                URL.revokeObjectURL(url);
 
-            showToast('📄 報表匯出成功！');
-        });
+                showToast('📄 報表匯出成功！');
+            });
+        }
         
-        // 班級選擇器邏輯
         let tempGradeIdx = gradeIdx;
         let tempClassNum = classNum;
         
         function updateClassDisplay() {
-            document.getElementById('display-grade').innerText = `${gradeStrs[tempGradeIdx]}年級`;
-            document.getElementById('display-class').innerText = `${tempClassNum}班`;
+            const gradeEl = document.getElementById('display-grade');
+            const classEl = document.getElementById('display-class');
+            if (gradeEl) gradeEl.innerText = `${gradeStrs[tempGradeIdx]}年級`;
+            if (classEl) classEl.innerText = `${tempClassNum}班`;
         }
 
-        document.getElementById('btn-grade-up').addEventListener('click', () => {
-            tempGradeIdx = Math.min(5, tempGradeIdx + 1); 
-            updateClassDisplay();
-        });
-        document.getElementById('btn-grade-down').addEventListener('click', () => {
-            tempGradeIdx = Math.max(0, tempGradeIdx - 1);
-            updateClassDisplay();
-        });
-        document.getElementById('btn-class-up').addEventListener('click', () => {
-            tempClassNum = Math.min(20, tempClassNum + 1);
-            updateClassDisplay();
-        });
-        document.getElementById('btn-class-down').addEventListener('click', () => {
-            tempClassNum = Math.max(1, tempClassNum - 1);
-            updateClassDisplay();
-        });
+        const gradeUp = document.getElementById('btn-grade-up');
+        const gradeDown = document.getElementById('btn-grade-down');
+        const classUp = document.getElementById('btn-class-up');
+        const classDown = document.getElementById('btn-class-down');
+
+        if (gradeUp) gradeUp.addEventListener('click', () => { tempGradeIdx = Math.min(5, tempGradeIdx + 1); updateClassDisplay(); });
+        if (gradeDown) gradeDown.addEventListener('click', () => { tempGradeIdx = Math.max(0, tempGradeIdx - 1); updateClassDisplay(); });
+        if (classUp) classUp.addEventListener('click', () => { tempClassNum = Math.min(20, tempClassNum + 1); updateClassDisplay(); });
+        if (classDown) classDown.addEventListener('click', () => { tempClassNum = Math.max(1, tempClassNum - 1); updateClassDisplay(); });
         
-        document.getElementById('btn-settings').addEventListener('click', () => {
-            tempGradeIdx = gradeIdx;
-            tempClassNum = classNum;
-            updateClassDisplay();
-            
-            document.getElementById('input-total-students').value = totalStudents;
-            document.getElementById('input-student-names').value = studentNames.join('\n');
-            modalSettings.classList.remove('hidden');
-            modalSettings.classList.add('flex');
-        });
+        const settingsBtn = document.getElementById('btn-settings');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                tempGradeIdx = gradeIdx;
+                tempClassNum = classNum;
+                updateClassDisplay();
+                
+                const totalInput = document.getElementById('input-total-students');
+                const namesInput = document.getElementById('input-student-names');
+                if (totalInput) totalInput.value = totalStudents;
+                if (namesInput) namesInput.value = studentNames.join('\n');
+                if (modalSettings) {
+                    modalSettings.classList.remove('hidden');
+                    modalSettings.classList.add('flex');
+                }
+            });
+        }
         
         document.querySelectorAll('.close-modal').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                e.target.closest('.fixed').classList.add('hidden');
-                e.target.closest('.fixed').classList.remove('flex');
+                const modal = e.target.closest('.fixed');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
             });
         });
         
-        // 一鍵全部完成功能
-        document.getElementById('btn-complete-all').addEventListener('click', () => {
-            studentData.forEach(s => {
-                // 若為 0 (未完成) 則改為 1 (已潔牙)；自動略過 2 (請假)
-                if (s.status === 0) s.status = 1; 
-            });
-            saveData(false);
-            renderCards();
-            modalSettings.classList.add('hidden');
-            modalSettings.classList.remove('flex');
-            showToast('✨ 已將全班轉為已潔牙！');
-        });
-        
-        // 一鍵全部重設功能
-        document.getElementById('btn-reset-all').addEventListener('click', () => {
-            showConfirm('一鍵全部重設', '確定要將全班狀態重設為「未完成」嗎？', '🔄', () => {
+        const completeAllBtn = document.getElementById('btn-complete-all');
+        if (completeAllBtn) {
+            completeAllBtn.addEventListener('click', () => {
                 studentData.forEach(s => {
-                    s.status = 0; 
+                    if (s.status === 0) s.status = 1; 
                 });
                 saveData(false);
                 renderCards();
-                modalSettings.classList.add('hidden');
-                modalSettings.classList.remove('flex');
-                showToast('🔄 已將全班狀態重設！');
-            });
-        });
-
-        // 儲存姓名與人數設定
-        document.getElementById('btn-save-settings').addEventListener('click', () => {
-            gradeIdx = tempGradeIdx;
-            classNum = tempClassNum;
-            classNameStr = `${gradeStrs[gradeIdx]}年${classNum}班`;
-            
-            const newTotal = parseInt(document.getElementById('input-total-students').value);
-            const namesStr = document.getElementById('input-student-names').value;
-            // 過濾空白行
-            const newNames = namesStr.split('\n').map(n => n.trim()).filter(n => n.length > 0 || n === "");
-            
-            localStorage.setItem('tb_grade_idx', gradeIdx);
-            localStorage.setItem('tb_class_num', classNum);
-            localStorage.setItem('tb_class_name', classNameStr);
-            localStorage.setItem('tb_total_students', newTotal);
-            localStorage.setItem('tb_student_names', JSON.stringify(newNames));
-            
-            totalStudents = newTotal;
-            studentNames = newNames;
-            
-            updateMainTitle();
-            initGrid();
-            modalSettings.classList.add('hidden');
-            modalSettings.classList.remove('flex');
-            showToast('⚙️ 班級設定已更新！');
-        });
-        
-        // --- 資料管理功能 ---
-        // 1. 備份資料
-        document.getElementById('btn-backup').addEventListener('click', () => {
-            const backupData = {
-                className: localStorage.getItem('tb_class_name') || '一年1班',
-                totalStudents: parseInt(localStorage.getItem('tb_total_students')) || 30,
-                studentNames: JSON.parse(localStorage.getItem('tb_student_names') || '[]'),
-                records: JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}')
-            };
-            
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            
-            const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-            downloadAnchorNode.setAttribute("download", `${backupData.className}_備份_${dateStr}.json`);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-            showToast('📦 備份已下載完成！');
-        });
-
-        // 2. 匯入資料
-        document.getElementById('btn-import-trigger').addEventListener('click', () => {
-            document.getElementById('input-import-file').click();
-        });
-
-        document.getElementById('input-import-file').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    
-                    if (importedData.className !== undefined) {
-                        localStorage.setItem('tb_class_name', importedData.className);
-                        classNameStr = importedData.className;
-                        let matchImport = classNameStr.match(/([一二三四五六])年(\d+)班/);
-                        if (matchImport) {
-                            gradeIdx = gradeStrs.indexOf(matchImport[1]) !== -1 ? gradeStrs.indexOf(matchImport[1]) : 0;
-                            classNum = parseInt(matchImport[2]) || 1;
-                            localStorage.setItem('tb_grade_idx', gradeIdx);
-                            localStorage.setItem('tb_class_num', classNum);
-                        }
-                    }
-                    if (importedData.totalStudents !== undefined) localStorage.setItem('tb_total_students', importedData.totalStudents);
-                    if (importedData.studentNames !== undefined) localStorage.setItem('tb_student_names', JSON.stringify(importedData.studentNames));
-                    if (importedData.records !== undefined) localStorage.setItem('tooth_brushing_records', JSON.stringify(importedData.records));
-                    
-                    classNameStr = importedData.className || '一年1班';
-                    totalStudents = importedData.totalStudents || 30;
-                    studentNames = importedData.studentNames || [];
-                    
-                    updateMainTitle();
-                    
-                    // 更新設定面板的輸入框
-                    tempGradeIdx = gradeIdx;
-                    tempClassNum = classNum;
-                    updateClassDisplay();
-                    document.getElementById('input-total-students').value = totalStudents;
-                    document.getElementById('input-student-names').value = studentNames.join('\n');
-
-                    initGrid(); // 重新載入畫面
-                    showToast('📥 資料已成功匯入！');
-                } catch (err) {
-                    showToast('❌ 匯入失敗：檔案格式不正確');
-                }
-            };
-            reader.readAsText(file);
-            e.target.value = ''; // 清除選取的檔案，允許重複選取相同檔案
-        });
-
-        // 3. 刪除所有紀錄
-        document.getElementById('btn-delete-all-records').addEventListener('click', () => {
-            const recordsStr = localStorage.getItem('tooth_brushing_records');
-            let hasData = false;
-            try {
-                if (recordsStr) {
-                    const records = JSON.parse(recordsStr);
-                    if (Object.keys(records).length > 0) {
-                        hasData = true;
-                    }
-                }
-            } catch (e) {}
-
-            if (!hasData) {
-                showToast('⚠️ 目前無資料可刪除！');
-                return;
-            }
-
-            showConfirm('警告：刪除所有紀錄', '您確定要刪除「所有」的打卡紀錄嗎？', '🚨', () => {
-                showConfirm('最後確認', '刪除後將無法復原，只能透過備份檔還原。確定刪除？', '⚠️', () => {
-                    localStorage.removeItem('tooth_brushing_records');
-                    loadData(datePicker.value); // 重新載入當前畫面
-                    
-                    // 關閉設定面板讓使用者看到畫面更新
+                if (modalSettings) {
                     modalSettings.classList.add('hidden');
                     modalSettings.classList.remove('flex');
-                    
-                    showToast('🗑️ 所有紀錄已清空！');
+                }
+                showToast('✨ 已將全班轉為已潔牙！');
+            });
+        }
+        
+        const resetAllBtn = document.getElementById('btn-reset-all');
+        if (resetAllBtn) {
+            resetAllBtn.addEventListener('click', () => {
+                showConfirm('一鍵全部重設', '確定要將全班狀態重設為「未完成」嗎？', '🔄', () => {
+                    studentData.forEach(s => {
+                        s.status = 0; 
+                    });
+                    saveData(false);
+                    renderCards();
+                    if (modalSettings) {
+                        modalSettings.classList.add('hidden');
+                        modalSettings.classList.remove('flex');
+                    }
+                    showToast('🔄 已將全班狀態重設！');
                 });
             });
-        });
+        }
 
-        // 渲染歷史紀錄清單 (含刪除按鈕)
+        const saveSettingsBtn = document.getElementById('btn-save-settings');
+        if (saveSettingsBtn) {
+            saveSettingsBtn.addEventListener('click', () => {
+                gradeIdx = tempGradeIdx;
+                classNum = tempClassNum;
+                classNameStr = `${gradeStrs[gradeIdx]}年${classNum}班`;
+                
+                const newTotal = parseInt(document.getElementById('input-total-students').value) || 30;
+                const namesStr = document.getElementById('input-student-names').value || '';
+                const newNames = namesStr.split('\n').map(n => n.trim());
+                
+                storage.setItem('tb_grade_idx', gradeIdx);
+                storage.setItem('tb_class_num', classNum);
+                storage.setItem('tb_class_name', classNameStr);
+                storage.setItem('tb_total_students', newTotal);
+                storage.setItem('tb_student_names', JSON.stringify(newNames));
+                
+                totalStudents = newTotal;
+                studentNames = newNames;
+                
+                updateMainTitle();
+                initGrid();
+                if (modalSettings) {
+                    modalSettings.classList.add('hidden');
+                    modalSettings.classList.remove('flex');
+                }
+                showToast('⚙️ 班級設定已更新！');
+            });
+        }
+        
+        // 備份資料
+        const backupBtn = document.getElementById('btn-backup');
+        if (backupBtn) {
+            backupBtn.addEventListener('click', () => {
+                let recs = {};
+                try { recs = JSON.parse(storage.getItem('tooth_brushing_records') || '{}'); } catch(e){}
+                const backupData = {
+                    className: storage.getItem('tb_class_name') || '一年1班',
+                    totalStudents: parseInt(storage.getItem('tb_total_students')) || 30,
+                    studentNames: studentNames,
+                    records: recs
+                };
+                
+                const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.href = url;
+                
+                const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+                downloadAnchorNode.download = `${backupData.className}_備份_${dateStr}.json`;
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+                URL.revokeObjectURL(url);
+                showToast('📦 備份已下載完成！');
+            });
+        }
+
+        // 匯入資料
+        const importTrigger = document.getElementById('btn-import-trigger');
+        const importFileInput = document.getElementById('input-import-file');
+        if (importTrigger && importFileInput) {
+            importTrigger.addEventListener('click', () => {
+                importFileInput.click();
+            });
+
+            importFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        if (importedData.className !== undefined) {
+                            storage.setItem('tb_class_name', importedData.className);
+                            classNameStr = importedData.className;
+                            let matchImport = classNameStr.match(/([一二三四五六])年(\d+)班/);
+                            if (matchImport) {
+                                gradeIdx = gradeStrs.indexOf(matchImport[1]) !== -1 ? gradeStrs.indexOf(matchImport[1]) : 0;
+                                classNum = parseInt(matchImport[2]) || 1;
+                                storage.setItem('tb_grade_idx', gradeIdx);
+                                storage.setItem('tb_class_num', classNum);
+                            }
+                        }
+                        if (importedData.totalStudents !== undefined) storage.setItem('tb_total_students', importedData.totalStudents);
+                        if (importedData.studentNames !== undefined) storage.setItem('tb_student_names', JSON.stringify(importedData.studentNames));
+                        if (importedData.records !== undefined) storage.setItem('tooth_brushing_records', JSON.stringify(importedData.records));
+                        
+                        classNameStr = importedData.className || '一年1班';
+                        totalStudents = importedData.totalStudents || 30;
+                        studentNames = importedData.studentNames || [];
+                        
+                        updateMainTitle();
+                        
+                        tempGradeIdx = gradeIdx;
+                        tempClassNum = classNum;
+                        updateClassDisplay();
+                        const totalInput = document.getElementById('input-total-students');
+                        const namesInput = document.getElementById('input-student-names');
+                        if (totalInput) totalInput.value = totalStudents;
+                        if (namesInput) namesInput.value = studentNames.join('\n');
+
+                        initGrid();
+                        showToast('📥 資料已成功匯入！');
+                    } catch (err) {
+                        showToast('❌ 匯入失敗：檔案格式不正確');
+                    }
+                };
+                reader.readAsText(file);
+                e.target.value = '';
+            });
+        }
+
+        // 刪除所有紀錄
+        const delAllRecordsBtn = document.getElementById('btn-delete-all-records');
+        if (delAllRecordsBtn) {
+            delAllRecordsBtn.addEventListener('click', () => {
+                const recordsStr = storage.getItem('tooth_brushing_records');
+                let hasData = false;
+                try {
+                    if (recordsStr) {
+                        const records = JSON.parse(recordsStr);
+                        if (Object.keys(records).length > 0) {
+                            hasData = true;
+                        }
+                    }
+                } catch (e) {}
+
+                if (!hasData) {
+                    showToast('⚠️ 目前無資料可刪除！');
+                    return;
+                }
+
+                showConfirm('警告：刪除所有紀錄', '您確定要刪除「所有」的打卡紀錄嗎？', '🚨', () => {
+                    showConfirm('最後確認', '刪除後將無法復原，只能透過備份檔還原。確定刪除？', '⚠️', () => {
+                        storage.removeItem('tooth_brushing_records');
+                        const currDate = (datePicker && datePicker.value) ? datePicker.value : todayStr;
+                        loadData(currDate);
+                        
+                        if (modalSettings) {
+                            modalSettings.classList.add('hidden');
+                            modalSettings.classList.remove('flex');
+                        }
+                        
+                        showToast('🗑️ 所有紀錄已清空！');
+                    });
+                });
+            });
+        }
+
+        // 渲染歷史紀錄清單
         function renderRecordsModal() {
             const content = document.getElementById('records-content');
+            if (!content) return;
             content.innerHTML = '';
-            const records = JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}');
+            let records = {};
+            try { records = JSON.parse(storage.getItem('tooth_brushing_records') || '{}'); } catch(e){}
             const dates = Object.keys(records).sort().reverse();
             
             if (dates.length === 0) {
@@ -772,41 +1096,45 @@
             
             dates.forEach(date => {
                 const data = records[date];
-                const comp = data.filter(d => d.status === 1).length;
-                const uncomp = data.filter(d => d.status === 0).length;
-                const leave = data.filter(d => d.status === 2).length;
+                const safeData = Array.isArray(data) ? data : [];
+                const comp = safeData.filter(d => d.status === 1).length;
+                const uncomp = safeData.filter(d => d.status === 0).length;
+                const leave = safeData.filter(d => d.status === 2).length;
+                const recordMonsterIcon = generateMonsterSVG(date, "w-6 h-6 inline-block align-middle object-contain");
                 
                 const row = document.createElement('div');
-                row.className = 'bg-white dark:bg-gray-700 border-2 border-white dark:border-gray-600 rounded-2xl p-5 mb-4 flex items-center justify-between flex-wrap gap-4 shadow-sm';
+                row.className = 'bg-white dark:bg-gray-700 border-2 border-white dark:border-gray-600 rounded-2xl p-4 sm:p-5 mb-4 flex items-center justify-between flex-wrap gap-4 shadow-sm hover:border-[#829FAC]/50 transition-colors';
                 
-                // 左側日期與統計數據
                 const infoDiv = document.createElement('div');
-                infoDiv.className = 'flex items-center gap-6 flex-wrap flex-grow cursor-pointer hover:bg-jp-bg dark:hover:bg-gray-600 p-2 rounded-xl transition-colors';
-                infoDiv.title = "點擊查看未完成與請假名單";
-                infoDiv.onclick = () => showDetails(date, data);
+                infoDiv.className = 'flex items-center gap-4 sm:gap-6 flex-wrap flex-grow cursor-pointer p-2 rounded-xl hover:bg-[#F7F6F2]/70 dark:hover:bg-gray-600/60 active:scale-[0.99] transition-all';
+                infoDiv.title = "點擊彈出當日未完成與請假詳細名單";
+                infoDiv.onclick = () => showDetails(date, safeData);
                 infoDiv.innerHTML = `
-                    <div class="text-2xl font-black text-jp-secondary dark:text-indigo-400 w-36">${date}</div>
-                    <div class="flex gap-4 text-xl font-bold">
-                        <span class="text-jp-textUncompleted">👾 未完成: ${uncomp}</span>
-                        <span class="text-jp-textCompleted">✨ 已完成: ${comp}</span>
-                        <span class="text-jp-textLeave dark:text-gray-300">😴 請假: ${leave}</span>
+                    <div class="flex items-center gap-2">
+                        <div class="text-2xl font-black text-[#829FAC] dark:text-indigo-400 w-36">${date}</div>
+                        <span class="bg-[#829FAC]/15 text-[#829FAC] dark:bg-indigo-900/40 dark:text-indigo-300 text-xs px-2.5 py-1 rounded-full font-bold">🔍 查看名單</span>
+                    </div>
+                    <div class="flex items-center gap-4 text-lg sm:text-xl font-bold">
+                        <span class="text-[#A87670] flex items-center gap-1">${recordMonsterIcon} 未完成: ${uncomp}</span>
+                        <span class="text-[#6A826B]">✨ 已完成: ${comp}</span>
+                        <span class="text-[#757575] dark:text-gray-300 font-bold">🏠 請假: ${leave}</span>
                     </div>
                 `;
                 
-                // 右側刪除按鈕
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'bg-jp-cardUncompleted hover:bg-jp-danger text-jp-textUncompleted hover:text-white border-2 border-jp-borderUncompleted hover:border-jp-danger transition-colors rounded-xl px-5 py-2 font-bold text-lg flex items-center gap-2';
+                deleteBtn.className = 'bg-[#F9EBEA] hover:bg-[#C4847D] text-[#A87670] hover:text-white border-2 border-[#E8D0CE] hover:border-[#C4847D] transition-colors rounded-xl px-5 py-2 font-bold text-lg flex items-center gap-2 flex-shrink-0';
                 deleteBtn.innerHTML = '🗑️ 刪除';
-                deleteBtn.onclick = () => {
-                    // 自訂確認對話框
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
                     showConfirm('刪除當日紀錄', `確定要刪除 ${date} 的全班紀錄嗎？刪除後無法復原喔！`, '🗑️', () => {
-                        let recs = JSON.parse(localStorage.getItem('tooth_brushing_records') || '{}');
+                        let recs = {};
+                        try { recs = JSON.parse(storage.getItem('tooth_brushing_records') || '{}'); } catch(e){}
                         delete recs[date];
-                        localStorage.setItem('tooth_brushing_records', JSON.stringify(recs));
-                        renderRecordsModal(); // 重新渲染列表
+                        storage.setItem('tooth_brushing_records', JSON.stringify(recs));
+                        renderRecordsModal();
                         
-                        // 若刪除的是當前畫面選中的日期，同步清空主畫面
-                        if(datePicker.value === date) {
+                        const currDate = (datePicker && datePicker.value) ? datePicker.value : todayStr;
+                        if(currDate === date) {
                             loadData(date);
                         }
                         showToast(`🗑️ ${date} 的紀錄已刪除`);
@@ -819,97 +1147,181 @@
             });
         }
         
-        // 顯示詳細名單
-        function showDetails(date, data) {
-            const uncompleted = data.filter(d => d.status === 0).map(d => d.id);
-            const leave = data.filter(d => d.status === 2).map(d => d.id);
+        // 顯示詳細名單 (安全防護)
+        function showDetails(date, data, primaryType = 'uncompleted') {
+            playSoftTone('click');
+            const safeData = Array.isArray(data) ? data : [];
+            const uncompleted = safeData.filter(d => d.status === 0).map(d => d.id);
+            const completed = safeData.filter(d => d.status === 1).map(d => d.id);
+            const leave = safeData.filter(d => d.status === 2).map(d => d.id);
+            const detailMonsterIcon = generateMonsterSVG(date, "w-7 h-7 inline-block align-middle mr-1.5 object-contain");
             
-            document.getElementById('details-title').innerText = `🔍 ${date} 詳細名單`;
-            
-            let html = '';
-            
-            // 未完成
-            html += `<div class="bg-jp-cardUncompleted dark:bg-red-900 border-2 border-jp-borderUncompleted dark:border-red-700 rounded-xl p-4 shadow-sm">
-                        <div class="text-jp-textUncompleted dark:text-red-300 mb-2 border-b-2 border-jp-borderUncompleted dark:border-red-800 pb-2">👾 未完成名單 (${uncompleted.length}人)：</div>
-                        <div class="text-jp-text dark:text-gray-100 leading-relaxed">${uncompleted.length > 0 ? uncompleted.join('、') : '無'}</div>
-                     </div>`;
-                     
-            // 請假
-            if (leave.length > 0) {
-                html += `<div class="bg-jp-cardLeave dark:bg-gray-700 border-2 border-jp-borderLeave dark:border-gray-500 rounded-xl p-4 shadow-sm mt-2">
-                            <div class="text-jp-textLeave dark:text-gray-300 mb-2 border-b-2 border-jp-borderLeave dark:border-gray-600 pb-2">😴 請假名單 (${leave.length}人)：</div>
-                            <div class="text-jp-text dark:text-gray-100 leading-relaxed">${leave.join('、')}</div>
-                         </div>`;
+            const titleEl = document.getElementById('details-title');
+            if (titleEl) {
+                if (primaryType === 'completed') {
+                    titleEl.innerText = `✨ ${date} 已潔牙座號清單`;
+                } else if (primaryType === 'uncompleted') {
+                    titleEl.innerText = `👾 ${date} 未完成座號清單`;
+                } else {
+                    titleEl.innerText = `🔍 ${date} 詳細名單`;
+                }
             }
             
-            document.getElementById('details-content').innerHTML = html;
-            const modalDetails = document.getElementById('modal-details');
-            modalDetails.classList.remove('hidden');
-            modalDetails.classList.add('flex');
+            const uncompletedBlock = `
+                <div class="bg-[#F9EBEA] dark:bg-red-900 border-2 border-[#E8D0CE] dark:border-red-700 rounded-2xl p-4 shadow-sm">
+                    <div class="text-[#A87670] dark:text-red-300 mb-2 border-b-2 border-[#E8D0CE] dark:border-red-800 pb-2 flex items-center font-bold text-xl">
+                        ${detailMonsterIcon} 未完成座號 (${uncompleted.length}人)：
+                    </div>
+                    <div class="text-[#5C5C5C] dark:text-gray-100 leading-relaxed text-2xl font-black py-1">
+                        ${uncompleted.length > 0 ? uncompleted.join('、') : '<span class="text-gray-400 font-normal text-lg">全班皆已完成潔牙 🎉</span>'}
+                    </div>
+                </div>
+            `;
+
+            const completedBlock = `
+                <div class="bg-[#E9EFE9] dark:bg-green-900 border-2 border-[#CAD6CA] dark:border-green-700 rounded-2xl p-4 shadow-sm">
+                    <div class="text-[#6A826B] dark:text-green-300 mb-2 border-b-2 border-[#CAD6CA] dark:border-green-800 pb-2 flex items-center font-bold text-xl">
+                        <span class="mr-1.5">✨</span> 已潔牙座號 (${completed.length}人)：
+                    </div>
+                    <div class="text-[#5C5C5C] dark:text-gray-100 leading-relaxed text-2xl font-black py-1">
+                        ${completed.length > 0 ? completed.join('、') : '<span class="text-gray-400 font-normal text-lg">目前尚無同學完成潔牙</span>'}
+                    </div>
+                </div>
+            `;
+
+            let leaveBlock = '';
+            if (leave.length > 0) {
+                leaveBlock = `
+                    <div class="bg-[#F2F2F2] dark:bg-gray-700 border-2 border-[#D9D9D9] dark:border-gray-500 rounded-2xl p-4 shadow-sm mt-3">
+                        <div class="text-[#757575] dark:text-gray-300 mb-2 border-b-2 border-[#D9D9D9] dark:border-gray-600 pb-2 font-bold text-xl flex items-center gap-1.5">
+                            <span>🏠</span> 請假座號 (${leave.length}人)：
+                        </div>
+                        <div class="text-[#5C5C5C] dark:text-gray-100 leading-relaxed text-2xl font-black py-1">
+                            ${leave.join('、')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            let html = '';
+            if (primaryType === 'completed') {
+                html = completedBlock + `<div class="mt-3">${uncompletedBlock}</div>` + leaveBlock;
+            } else {
+                html = uncompletedBlock + `<div class="mt-3">${completedBlock}</div>` + leaveBlock;
+            }
+            
+            const detailsContent = document.getElementById('details-content');
+            if (detailsContent) detailsContent.innerHTML = html;
+
+            const targetModal = modalDetails || document.getElementById('modal-details');
+            if (targetModal) {
+                targetModal.classList.remove('hidden');
+                targetModal.classList.add('flex');
+            }
         }
 
-        // 深色/淺色模式切換
+        // 綁定頂部統計數字按鈕點擊事件
+        const badgeUncompleted = document.getElementById('badge-uncompleted');
+        if (badgeUncompleted) {
+            badgeUncompleted.addEventListener('click', () => {
+                const currDate = (datePicker && datePicker.value) ? datePicker.value : todayStr;
+                showDetails(currDate, studentData, 'uncompleted');
+            });
+        }
+
+        const badgeCompleted = document.getElementById('badge-completed');
+        if (badgeCompleted) {
+            badgeCompleted.addEventListener('click', () => {
+                const currDate = (datePicker && datePicker.value) ? datePicker.value : todayStr;
+                showDetails(currDate, studentData, 'completed');
+            });
+        }
+
+        // 主題切換與記憶
         const themeBtn = document.getElementById('btn-theme');
-        // 從瀏覽器記憶中讀取主題設定，預設為淺色
-        let isDark = localStorage.getItem('tb_theme') === 'dark';
+        let isDark = storage.getItem('tb_theme') === 'dark';
         
-        // 網頁初始載入時自動套用記憶的主題
         if (isDark) {
             document.documentElement.classList.add('dark');
-            themeBtn.innerText = '☀️';
+            if (themeBtn) themeBtn.innerText = '☀️';
         } else {
             document.documentElement.classList.remove('dark');
-            themeBtn.innerText = '🌙';
+            if (themeBtn) themeBtn.innerText = '🌙';
         }
 
-        themeBtn.addEventListener('click', () => {
-            isDark = !isDark;
-            if (isDark) {
-                document.documentElement.classList.add('dark');
-                themeBtn.innerText = '☀️';
-                localStorage.setItem('tb_theme', 'dark'); // 記憶深色模式
-            } else {
-                document.documentElement.classList.remove('dark');
-                themeBtn.innerText = '🌙';
-                localStorage.setItem('tb_theme', 'light'); // 記憶淺色模式
-            }
-        });
-        
-        // 全螢幕切換 (加入跨瀏覽器與舊型觸控面板相容性支援)
-        const fsBtn = document.getElementById('btn-fullscreen');
-        fsBtn.addEventListener('click', () => {
-            const docEl = document.documentElement;
-            const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-            
-            if (!isFullscreen) {
-                if (docEl.requestFullscreen) {
-                    docEl.requestFullscreen().catch(err => {
-                        showToast('⚠️ 目前環境限制全螢幕 (下載後執行即可正常)');
-                    });
-                } else if (docEl.webkitRequestFullscreen) { /* Safari 及舊版 Chrome/安卓 */
-                    docEl.webkitRequestFullscreen();
-                } else if (docEl.mozRequestFullScreen) { /* Firefox */
-                    docEl.mozRequestFullScreen();
-                } else if (docEl.msRequestFullscreen) { /* IE/Edge 舊版 */
-                    docEl.msRequestFullscreen();
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => {
+                isDark = !isDark;
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    themeBtn.innerText = '☀️';
+                    storage.setItem('tb_theme', 'dark');
                 } else {
-                    showToast('⚠️ 您的設備目前不支援全螢幕模式');
+                    document.documentElement.classList.remove('dark');
+                    themeBtn.innerText = '🌙';
+                    storage.setItem('tb_theme', 'light');
                 }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
+            });
+        }
+
+        // 音效開關與靜音記憶
+        const soundBtn = document.getElementById('btn-sound');
+        function updateSoundBtnUI() {
+            if (!soundBtn) return;
+            soundBtn.innerText = isMuted ? '🔇' : '🔊';
+            soundBtn.title = isMuted ? '目前靜音 (點擊開啟音效)' : '音效開啟 (點擊靜音)';
+        }
+        updateSoundBtnUI();
+
+        if (soundBtn) {
+            soundBtn.addEventListener('click', () => {
+                isMuted = !isMuted;
+                storage.setItem('tb_sound_muted', isMuted ? 'true' : 'false');
+                updateSoundBtnUI();
+                if (!isMuted) {
+                    playSoftTone('complete');
                 }
-            }
-        });
+                showToast(isMuted ? '🔇 已開啟靜音模式' : '🔊 已開啟點擊音效');
+            });
+        }
         
-        // 監聽各種全螢幕狀態改變事件以切換圖示
+        // 全螢幕切換 (完整支援多種面板核心)
+        const fsBtn = document.getElementById('btn-fullscreen');
+        if (fsBtn) {
+            fsBtn.addEventListener('click', () => {
+                const docEl = document.documentElement;
+                const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+                
+                if (!isFullscreen) {
+                    if (docEl.requestFullscreen) {
+                        docEl.requestFullscreen().catch(err => {
+                            showToast('⚠️ 目前環境限制全螢幕 (下載後執行即可正常)');
+                        });
+                    } else if (docEl.webkitRequestFullscreen) {
+                        docEl.webkitRequestFullscreen();
+                    } else if (docEl.mozRequestFullScreen) {
+                        docEl.mozRequestFullScreen();
+                    } else if (docEl.msRequestFullscreen) {
+                        docEl.msRequestFullscreen();
+                    } else {
+                        showToast('⚠️ 您的設備目前不支援全螢幕模式');
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
+            });
+        }
+        
         function updateFsIcon() {
+            if (!fsBtn) return;
             const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
             fsBtn.innerText = isFs ? '🗗' : '⛶';
         }
@@ -918,7 +1330,12 @@
         document.addEventListener('mozfullscreenchange', updateFsIcon);
         document.addEventListener('MSFullscreenChange', updateFsIcon);
         
-        // 啟動系統
+        // 初始化啟動
+        window.addEventListener('load', () => {
+            updateMainTitle();
+            initGrid();
+        });
+        updateMainTitle();
         initGrid();
     </script>
 </body>
